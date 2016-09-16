@@ -4,28 +4,23 @@
 // retrieve the refresh token which is used for long term access to Google Contacts. You should
 // add this refresh token to the 'config.json' file.
 
+
+
 if (!isset($_GET['code'])) {
     die('No code URL paramete present.');
 }
 
+require '../config.php';
+$fk_user = $_SESSION['GCS_fk_user'];
 $code = $_GET['code'];
 
-require_once 'vendor/autoload.php';
+dol_include_once('/googlecontactsync/class/gcs.class.php');
 
-use rapidweb\googlecontacts\helpers\GoogleHelper;
+$PDOdb=new TPDOdb;
+$token = new TGCSToken;
 
-$client = GoogleHelper::getClient();
-
-GoogleHelper::authenticate($client, $code);
-
-$accessToken = GoogleHelper::getAccessToken($client);
-
-if (!isset($accessToken->refresh_token)) {
-    echo 'Google did not respond with a refresh token. You can still use the Google Contacts API, but you may to re-authorise your application in the future. ';
-
-    echo 'Access token response:';
-
-    var_dump($accessToken);
-} else {
-    echo 'Refresh token is: '.$accessToken->refresh_token.' - Please add this to the config file.';
-}
+$token->loadByObject($PDOdb, $fk_user, 'user');
+$token->token = $code;
+$token->type_object='user';
+$token->fk_object = $fk_user;
+$token->save($PDOdb);

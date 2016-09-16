@@ -16,7 +16,11 @@ use rapidweb\googlecontacts\helpers\GoogleHelper;
 
 $client = GoogleHelper::getClient();
 
-$authUrl = GoogleHelper::getAuthUrl($client);
 
+
+$authUrl = GoogleHelper::getAuthUrl($client);
+//var_dump($authUrl,$client);
+
+$_SESSION['GCS_fk_user'] = $fk_user_gcs;
 
 header('location:'.$authUrl);
