@@ -59,30 +59,41 @@ class ActionsgoogleContactSync
 	 * @param   HookManager     $hookmanager    Hook manager propagated to allow calling another hook
 	 * @return  int                             < 0 on error, 0 on success, 1 to replace standard code
 	 */
-	function doActions($parameters, &$object, &$action, $hookmanager)
+	function formObjectOptions($parameters, &$object, &$action, $hookmanager)
 	{
-		$error = 0; // Error counter
-		$myvalue = 'test'; // A result value
-
-		print_r($parameters);
-		echo "action: " . $action;
-		print_r($object);
-
-		if (in_array('somecontext', explode(':', $parameters['context'])))
+	
+		if (in_array('usercard', explode(':', $parameters['context'])))
 		{
-		  // do something only for the context 'somecontext'
+		  
+			//var_dump($parameters);
+			
+			define('INC_FROM_DOLIBARR',true);
+			dol_include_once('/googlecontactsync/config.php');
+			dol_include_once('/googlecontactsync/class/gcs.class.php');
+				  	
+			$PDOdb=new TPDOdb;
+			$token = TGCSToken::getTokenFor($PDOdb, $object->id, 'user');
+		  
+		  	global $langs,$conf,$user,$db;
+		  
+		  	if(empty($object->email)) {
+		  		$button = $langs->trans('SetYourEmailToGetToken');
+		  	}
+			else if(empty($token)) {
+		    	$button = '<a href="'.dol_buildpath('/googlecontactsync/php-google-contacts-v3-api/authorise-application.php',2).'?fk_user='.$object->id.'" target="_blank">'.$langs->trans('GetYourToken').'</a>';
+		    }
+			else{
+				$button = $langs->trans('UserHasToken').img_info($token);
+			}
+		  
+		  
+		  	echo '
+		  		<tr><td>'.$langs->trans('TokenForUser').'</td><td>'.$button.'</td></tr>
+		  	';
+		  	
+		  	
+		  
 		}
 
-		if (! $error)
-		{
-			$this->results = array('myreturn' => $myvalue);
-			$this->resprints = 'A text to show';
-			return 0; // or return 1 to replace standard code
-		}
-		else
-		{
-			$this->errors[] = 'Error message';
-			return -1;
-		}
 	}
 }

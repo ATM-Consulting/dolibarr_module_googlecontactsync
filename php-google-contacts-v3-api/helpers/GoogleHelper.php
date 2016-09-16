@@ -6,9 +6,19 @@ abstract class GoogleHelper
 {
     private static function loadConfig()
     {
-        $contents = file_get_contents(__DIR__.'/../.config.json');
-
-        $config = json_decode($contents);
+       
+		global $conf,$fk_user_gcs,$PDOdb;
+		
+        $config = new \stdClass;
+		$config->clientID = $conf->global->GCS_GOOGLE_CLIENT_ID;
+		$config->clientSecret = $conf->global->GCS_GOOGLE_CLIENT_SECRET;
+		$config->redirectUri = dol_buildpath('/googlecontactsync/php-google-contacts-v3-api/redirect-handler.php',2);
+		$config->developerKey = $conf->global->GCS_GOOGLE_DEVELOPER_KEY;
+		
+		$PDOdb=new \TPDOdb;
+		$token = \TGCSToken::getTokenFor($PDOdb, $fk_user_gcs, 'user');
+		  
+		$config->refreshToken = $token;
 
         return $config;
     }
