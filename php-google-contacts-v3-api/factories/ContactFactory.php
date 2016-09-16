@@ -222,7 +222,7 @@ abstract class ContactFactory
         $xmlToSend = $doc->saveXML();
 
         $client = GoogleHelper::getClient();
-
+var_dump($client);
         $req = new \Google_Http_Request('https://www.google.com/m8/feeds/contacts/default/full');
         $req->setRequestHeaders(array('content-type' => 'application/atom+xml; charset=UTF-8; type=feed'));
         $req->setRequestMethod('POST');

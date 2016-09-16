@@ -89,6 +89,8 @@ class modgoogleContactSync extends DolibarrModules
 		//                        );
 		$this->module_parts = array(
 			'hooks'=>array('usercard')
+			,'triggers'=>1
+			,'js'=>array('/googlecontactsync/js/checker.js.php')
 		);
 
 		// Data directories to create when module is enabled.

@@ -16,6 +16,9 @@ abstract class GoogleHelper
 		$config->developerKey = $conf->global->GCS_GOOGLE_DEVELOPER_KEY;
 		
 		$PDOdb=new \TPDOdb;
+		
+		if(!empty($_SESSION['GCS_fk_user']))$fk_user_gcs=$_SESSION['GCS_fk_user'];
+		
 		$token = \TGCSToken::getTokenFor($PDOdb, $fk_user_gcs, 'user');
 		  
 		$config->refreshToken = $token;
