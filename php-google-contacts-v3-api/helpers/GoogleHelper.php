@@ -9,20 +9,26 @@ abstract class GoogleHelper
        
 		global $conf,$fk_user_gcs,$PDOdb;
 		
-        $config = new \stdClass;
+  	        $config = new \stdClass;
 		$config->clientID = $conf->global->GCS_GOOGLE_CLIENT_ID;
 		$config->clientSecret = $conf->global->GCS_GOOGLE_CLIENT_SECRET;
 		$config->redirectUri = dol_buildpath('/googlecontactsync/php-google-contacts-v3-api/redirect-handler.php',2);
-		$config->developerKey = $conf->global->GCS_GOOGLE_DEVELOPER_KEY;
+		$config->developerKey = !empty($conf->global->GCS_GOOGLE_DEVELOPER_KEY) ? $conf->global->GCS_GOOGLE_DEVELOPER_KEY : '';
 		
+		if(!defined('GCS_NO_TOKEN')) {
+
 		$PDOdb=new \TPDOdb;
 		
 		if(!empty($_SESSION['GCS_fk_user']))$fk_user_gcs=$_SESSION['GCS_fk_user'];
 		
 		$token = \TGCSToken::getTokenFor($PDOdb, $fk_user_gcs, 'user');
-		  
 		$config->refreshToken = $token;
 
+		}
+		else{
+			$config->refreshToken = '';
+		}
+//var_dump($config);exit;
         return $config;
     }
 

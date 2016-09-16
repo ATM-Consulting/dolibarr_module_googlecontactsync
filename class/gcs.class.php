@@ -34,6 +34,10 @@ class TGCSToken extends TObjetStd {
 			if(empty($object->name)) $object->name = $object->nom;
 		}
 		
+		foreach($object as $k=>&$v) { 
+			if(is_null($v)) $v = '';  
+		}
+//var_dump($object);
 		return $object;
 	}
 
@@ -49,8 +53,7 @@ class TGCSToken extends TObjetStd {
 			$contact = rapidweb\googlecontacts\factories\ContactFactory::getBySelfURL($this->token);	
 		}
 		else{
-			
-			$contact = rapidweb\googlecontacts\factories\ContactFactory::create($object->name, $object->tel, $object->email);
+			$contact = rapidweb\googlecontacts\factories\ContactFactory::create($object->name, $object->phone, $object->email);
 			$this->token = $contact->selfURL;
 			var_dump($contact);
 			$this->save($PDOdb);

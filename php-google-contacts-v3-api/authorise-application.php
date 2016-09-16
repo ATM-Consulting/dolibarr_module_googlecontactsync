@@ -8,19 +8,16 @@
 require '../config.php';
 dol_include_once('/googlecontactsync/class/gcs.class.php');
 
-$fk_user_gcs = (int)GETPOST('fk_user');
-
 require_once 'vendor/autoload.php';
 
 use rapidweb\googlecontacts\helpers\GoogleHelper;
 
+define('GCS_NO_TOKEN',true);
+
 $client = GoogleHelper::getClient();
-
-
-
 $authUrl = GoogleHelper::getAuthUrl($client);
 //var_dump($authUrl,$client);
 
-$_SESSION['GCS_fk_user'] = $fk_user_gcs;
+$_SESSION['GCS_fk_user'] = (int)GETPOST('fk_user');
 
 header('location:'.$authUrl);

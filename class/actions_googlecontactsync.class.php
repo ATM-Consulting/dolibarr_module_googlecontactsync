@@ -80,10 +80,10 @@ class ActionsgoogleContactSync
 		  		$button = $langs->trans('SetYourEmailToGetToken');
 		  	}
 			else if(empty($token)) {
-		    	$button = '<a href="'.dol_buildpath('/googlecontactsync/php-google-contacts-v3-api/authorise-application.php',2).'?fk_user='.$object->id.'" target="_blank">'.$langs->trans('GetYourToken').'</a>';
-		    }
+			    	$button = '<a href="'.dol_buildpath('/googlecontactsync/php-google-contacts-v3-api/authorise-application.php',2).'?fk_user='.$object->id.'" target="_blank">'.$langs->trans('GetYourToken').'</a>';
+			    }
 			else{
-				$button = $langs->trans('UserHasToken').img_info($token);
+				$button = '<a href="'.dol_buildpath('/googlecontactsync/php-google-contacts-v3-api/authorise-application.php',2).'?fk_user='.$object->id.'" target="_blank">'.$langs->trans('UserHasToken').'</a>'.img_info($token);
 			}
 		  
 		  
