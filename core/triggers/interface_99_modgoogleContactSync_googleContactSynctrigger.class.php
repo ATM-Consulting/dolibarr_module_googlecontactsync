@@ -129,6 +129,7 @@ class InterfacegoogleContactSynctrigger
 			$token->fk_object = $object->id;
 			$token->type_object = 'company';
 			$token->fk_user = $user->id;
+			$token->to_sync = 1;
 			$token->save($PDOdb); 
 			
 			
