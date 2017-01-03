@@ -16,11 +16,21 @@ $code = $_GET['code'];
 
 dol_include_once('/googlecontactsync/class/gcs.class.php');
 
-$PDOdb=new TPDOdb;
-$token = new TGCSToken;
+require __DIR__.'/vendor/autoload.php';
+use rapidweb\googlecontacts\helpers\GoogleHelper;
+
+$client = GoogleHelper::getClient();
+GoogleHelper::authenticate($client, $code);
+$accessToken = GoogleHelper::getAccessToken($client);
+
+$PDOdb=new \TPDOdb;
+$token = new \TGCSToken;
 
 $token->loadByObject($PDOdb, $fk_user, 'user');
-$token->token = $code;
+$token->token = $accessToken->access_token;
+$token->refresh_token = $accessToken->refresh_token;
 $token->type_object='user';
 $token->fk_object = $fk_user;
 $token->save($PDOdb);
+
+header('location:'.dol_buildpath('/user/card.php',1).'?id='.$fk_user);

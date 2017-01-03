@@ -8,7 +8,7 @@ class TGCSToken extends TObjetStd {
         $this->set_table(MAIN_DB_PREFIX.'gcs_token');
 		
 		$this->add_champs('fk_object,fk_user,to_sync',array('type'=>'integer', 'index'=>true));
-        $this->add_champs('token,type_object', array('type'=>'string','index'=>true));
+        $this->add_champs('token,refresh_token,type_object', array('type'=>'string','index'=>true));
 		
         $this->_init_vars();
 
@@ -44,30 +44,38 @@ class TGCSToken extends TObjetStd {
 	function sync(&$PDOdb) {
 		
 		$object = $this->getObject();		
-		
 		require_once __DIR__.'/../php-google-contacts-v3-api/vendor/autoload.php';
 		
 		$_SESSION['GCS_fk_user'] = $this->fk_user; // TODO i'm shiting in the rain ! AA 
+		
+		$object->phone = self::normalize($object->phone);
+		$object->email = self::normalize($object->email);
 		
 		if($this->token) {
 			$contact = rapidweb\googlecontacts\factories\ContactFactory::getBySelfURL($this->token);	
 		}
 		else{
-			$contact = rapidweb\googlecontacts\factories\ContactFactory::create($object->name, $object->phone, $object->email);
+			$contact = rapidweb\googlecontacts\factories\ContactFactory::create($object->name,$object->phone, $object->email);
 			$this->token = $contact->selfURL;
-			var_dump($contact);
 			$this->save($PDOdb);
 		}
-		/*
-		$contact->name = 'Test';
-		$contact->phoneNumber = '07812363789';
-		$contact->email = 'test@example.com';
 		
-		$contactAfterUpdate = ContactFactory::submitUpdates($contact);
-		*/
-		return false;
+		$contact->name = $object->name; 
+		$contact->phoneNumber = $object->phone;
+		$contact->email = $object->email;
+		
+		$contactAfterUpdate = rapidweb\googlecontacts\factories\ContactFactory::submitUpdates($contact);
+		
+		if(!empty($contactAfterUpdate->id)) return $contactAfterUpdate;
+		else return false;
 	}
 
+	static function normalize($value) {
+		
+		if(empty($value)) $value = 'inconnu';
+		return $value;
+	}
+	
 	function loadByObject(&$PDOdb, $fk_object, $type_object, $fk_user = 0) {
 		
 		$sql = "SELECT rowid FROM ".MAIN_DB_PREFIX."gcs_token WHERE fk_object=".(int)$fk_object." AND type_object='".$type_object."'";
@@ -110,7 +118,7 @@ class TGCSToken extends TObjetStd {
 		$gcs = new TGCSToken;
 		if($gcs->loadByObject($PDOdb, $fk_object, $type_object)) {
 			
-			return $gcs->token;
+			return $gcs;
 			
 		}
 	

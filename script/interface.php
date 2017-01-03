@@ -37,25 +37,26 @@ function _getAllContact() {
 function _sync() {
 	global $user,$fk_user_gcs;
 	
-	$PDOdb=new TPDOdb;
+	$PDOdb=new \TPDOdb;
 	
 	$TToken = \TGCSToken::getTokenToSync($PDOdb,$user->id);
-	foreach($TToken as &$token) {
-		$token->to_sync = 0;
-		//$token->save($PDOdb);
-	}
 	
+	$TSync=array();
 	foreach($TToken as &$token) {
-		if(!$token->sync($PDOdb)) {
+		
+		$res = $token->sync($PDOdb);
+		$token->to_sync = 0;
+		if($res === false) {
 			$token->to_sync = 1;
 			$token->save($PDOdb);
 		}
 		else{
+			$token->save($PDOdb);
 			$TSync[] = $token;
 		}
 	}
 	
-	$TSync=array();	
+	
 	
 	return $TSync;
 }

@@ -199,7 +199,7 @@ abstract class ContactFactory
 
     public static function create($name, $phoneNumber, $emailAddress)
     {
-        $doc = new \DOMDocument();
+    	$doc = new \DOMDocument();
         $doc->formatOutput = true;
         $entry = $doc->createElement('atom:entry');
         $entry->setAttributeNS('http://www.w3.org/2000/xmlns/', 'xmlns:atom', 'http://www.w3.org/2005/Atom');
@@ -220,9 +220,8 @@ abstract class ContactFactory
         $entry->appendChild($contact);
 
         $xmlToSend = $doc->saveXML();
-
         $client = GoogleHelper::getClient();
-var_dump($client);
+
         $req = new \Google_Http_Request('https://www.google.com/m8/feeds/contacts/default/full');
         $req->setRequestHeaders(array('content-type' => 'application/atom+xml; charset=UTF-8; type=feed'));
         $req->setRequestMethod('POST');
@@ -233,6 +232,13 @@ var_dump($client);
         $response = $val->getResponseBody();
 
         $xmlContact = simplexml_load_string($response);
+
+        if(!empty($xmlContact->error->internalReason)) {
+        	
+        	return $xmlContact->error;
+        	
+        }
+        
         $xmlContact->registerXPathNamespace('gd', 'http://schemas.google.com/g/2005');
 
         $xmlContactsEntry = $xmlContact;

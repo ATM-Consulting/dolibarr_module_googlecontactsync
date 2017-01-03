@@ -16,7 +16,7 @@ define('GCS_NO_TOKEN',true);
 
 $client = GoogleHelper::getClient();
 $authUrl = GoogleHelper::getAuthUrl($client);
-//var_dump($authUrl,$client);
+//var_dump($authUrl,$client);exit;
 
 $_SESSION['GCS_fk_user'] = (int)GETPOST('fk_user');
 

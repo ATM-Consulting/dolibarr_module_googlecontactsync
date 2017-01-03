@@ -26,7 +26,7 @@
 /**
  * Class ActionsgoogleContactSync
  */
-class ActionsgoogleContactSync
+class Actionsgooglecontactsync
 {
 	/**
 	 * @var array Hook results. Propagated to $hookmanager->resArray for later reuse
@@ -65,7 +65,7 @@ class ActionsgoogleContactSync
 		if (in_array('usercard', explode(':', $parameters['context'])))
 		{
 		  
-			//var_dump($parameters);
+			
 			
 			define('INC_FROM_DOLIBARR',true);
 			dol_include_once('/googlecontactsync/config.php');
@@ -80,10 +80,10 @@ class ActionsgoogleContactSync
 		  		$button = $langs->trans('SetYourEmailToGetToken');
 		  	}
 			else if(empty($token)) {
-			    	$button = '<a href="'.dol_buildpath('/googlecontactsync/php-google-contacts-v3-api/authorise-application.php',2).'?fk_user='.$object->id.'" target="_blank">'.$langs->trans('GetYourToken').'</a>';
+			    	$button = '<a href="'.dol_buildpath('/googlecontactsync/php-google-contacts-v3-api/authorise-application.php',2).'?fk_user='.$object->id.'">'.$langs->trans('GetYourToken').'</a>';
 			    }
 			else{
-				$button = '<a href="'.dol_buildpath('/googlecontactsync/php-google-contacts-v3-api/authorise-application.php',2).'?fk_user='.$object->id.'" target="_blank">'.$langs->trans('UserHasToken').'</a>'.img_info($token);
+				$button = '<a href="'.dol_buildpath('/googlecontactsync/php-google-contacts-v3-api/authorise-application.php',2).'?fk_user='.$object->id.'">'.$langs->trans('UserHasToken').'</a>'.img_info('Token : '.$token->token.' - Refresh : '.$token->refresh_token);
 			}
 		  
 		  

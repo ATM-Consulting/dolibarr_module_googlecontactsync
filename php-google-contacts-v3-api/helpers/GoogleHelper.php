@@ -17,16 +17,19 @@ abstract class GoogleHelper
 		
 		if(!defined('GCS_NO_TOKEN')) {
 
-		$PDOdb=new \TPDOdb;
-		
-		if(!empty($_SESSION['GCS_fk_user']))$fk_user_gcs=$_SESSION['GCS_fk_user'];
-		
-		$token = \TGCSToken::getTokenFor($PDOdb, $fk_user_gcs, 'user');
-		$config->refreshToken = $token;
-
+			$PDOdb=new \TPDOdb;
+			
+			if(!empty($_SESSION['GCS_fk_user']))$fk_user_gcs=$_SESSION['GCS_fk_user'];
+			
+			$token = \TGCSToken::getTokenFor($PDOdb, $fk_user_gcs, 'user');
+			$config->token = $token->token;
+			$config->refresh_token = $token->refresh_token;
+			
+			
 		}
 		else{
-			$config->refreshToken = '';
+			$config->token = '';
+			$config->refresh_token = '';
 		}
 //var_dump($config);exit;
         return $config;
@@ -37,7 +40,7 @@ abstract class GoogleHelper
         $config = self::loadConfig();
 
         $client = new \Google_Client();
-
+        
         $client->setApplicationName('Rapid Web Google Contacts API');
 
         $client->setScopes(array(/*
@@ -55,9 +58,10 @@ abstract class GoogleHelper
         $client->setAccessType('offline');
         $client->setApprovalPrompt('force');
         $client->setDeveloperKey($config->developerKey);
-
-        if (isset($config->refreshToken) && $config->refreshToken) {
-            $client->refreshToken($config->refreshToken);
+        
+        if (isset($config->refresh_token) && $config->refresh_token) {
+           	$client->refreshToken($config->refresh_token);
+           
         }
 
         return $client;
