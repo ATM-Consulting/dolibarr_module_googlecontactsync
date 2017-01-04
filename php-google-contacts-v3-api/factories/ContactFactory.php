@@ -107,7 +107,8 @@ abstract class ContactFactory
         $val = $client->getAuth()->authenticatedRequest($req);
 
         $response = $val->getResponseBody();
-
+/*var_dump($val);
+echo $response;exit;*/
         $xmlContact = simplexml_load_string($response);
         $xmlContact->registerXPathNamespace('gd', 'http://schemas.google.com/g/2005');
 
@@ -148,7 +149,8 @@ abstract class ContactFactory
     public static function submitUpdates(Contact $updatedContact)
     {
         $client = GoogleHelper::getClient();
-
+//var_dump($updatedContact);
+//exit($updatedContact->selfURL);
         $req = new \Google_Http_Request($updatedContact->selfURL);
 
         $val = $client->getAuth()->authenticatedRequest($req);

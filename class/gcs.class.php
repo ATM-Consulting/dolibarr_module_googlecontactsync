@@ -78,11 +78,12 @@ class TGCSToken extends TObjetStd {
 		
 		$object->phone = self::normalize($TPhone[0]);
 		$object->email = self::normalize($object->email);
-		
 		if($this->token) {
 			$contact = rapidweb\googlecontacts\factories\ContactFactory::getBySelfURL($this->token);	
+//		var_dump($contact,$this);exit;
 		}
-		else{
+		
+		if(empty($contact->id)) {
 			$contact = rapidweb\googlecontacts\factories\ContactFactory::create($object->name,$object->phone, $object->email);
 			$this->token = $contact->selfURL;
 			$this->save($PDOdb);
