@@ -167,8 +167,8 @@ abstract class ContactFactory
 
         foreach ($contactGDNodes as $key => $value) {
             $attributes = $value->attributes();
-
-            if ($key == 'email') {
+			
+			if ($key == 'email') {
                 $attributes['address'] = $updatedContact->email;
             } else {
                 $xmlContactsEntry->$key = $updatedContact->$key;

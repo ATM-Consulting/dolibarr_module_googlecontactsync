@@ -44,7 +44,7 @@ class TGCSToken extends TObjetStd {
 			$object->fetch($this->fk_object);
 			$object->name = $object->getFullName($langs);
 			$object->email = $object->mail;
-			$object->phone = empty($object->phone_pro) ? $object->phone_perso : $object->phone_pro;
+			$object->phone = $object->phone_pro;
 			$object->fetch_thirdparty();
 			$object->organization = $object->thirdparty->name;
 			
@@ -71,7 +71,12 @@ class TGCSToken extends TObjetStd {
 		
 		$_SESSION['GCS_fk_user'] = $this->fk_user; // TODO i'm shiting in the rain ! AA 
 		
-		$object->phone = self::normalize($object->phone);
+		$TPhone = array();
+		if(!empty($object->phone)) $TPhone[] =$object->phone;
+		if(!empty($object->phone_perso)) $TPhone[] =$object->phone_perso; //TODO add other phone to card
+		if(!empty($object->phone_mobile)) $TPhone[] =$object->phone_mobile;
+		
+		$object->phone = self::normalize($TPhone[0]);
 		$object->email = self::normalize($object->email);
 		
 		if($this->token) {
@@ -83,10 +88,11 @@ class TGCSToken extends TObjetStd {
 			$this->save($PDOdb);
 		}
 		
-		$contact->name = $object->name; 
+		$contact->name = $object->name;
+		
 		$contact->phoneNumber = $object->phone;
 		$contact->email = $object->email;
-		$contact->postalAddress = $object->address;
+		$contact->postalAddress = $object->address.', '.$object->zip.' '.$object->town;
 		if(!empty($object->organization)) {
 			$contact->organization = $object->organization ;
 			$contact->organization_title = self::normalize($object->poste);
