@@ -14,6 +14,11 @@ switch ($put) {
 			
 		break;
 	
+	case 'setGroup':
+		
+		__out(_setGroup(GETPOST('name')),'json');
+		
+		break;
 	
 }
 
@@ -32,6 +37,17 @@ function _getAllContact() {
 
 	return  \rapidweb\googlecontacts\factories\ContactFactory::getAll();
 
+}
+
+function _setGroup($name) {
+	global $user;
+	
+	$PDOdb=new \TPDOdb;
+	
+	require_once __DIR__.'/../php-google-contacts-v3-api/vendor/autoload.php';
+	
+	return \TGCSToken::setGroup($PDOdb,$user->id,$name);
+	
 }
 
 function _sync() {

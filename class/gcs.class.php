@@ -169,5 +169,65 @@ class TGCSToken extends TObjetStd {
 			setEventMessage($langs->trans('SyncObjectInitiated'));
 			
 	}
+
+	static function setGroup(&$PDOdb, $fk_user, $name) {
+		global $user, $TCacheGroupSync;
+		
+		if(empty($TCacheGroupSync[$fk_user]) || isset($_REQUEST['force'])) {
+			$TCacheGroupSync[$fk_user]=array();
+			$TGroup = rapidweb\googlecontacts\factories\ContactFactory::getAllByURL('https://www.google.com/m8/feeds/groups/'.$user->email.'/full');
+			foreach($TGroup as $g) {
+				
+				$TCacheGroupSync[$user->id][(string) $g->title] = (string) $g->id;
+				
+			}
+		}
+		
+		if(isset($TCacheGroupSync[$fk_user][$name])) {
+			$g1 = rapidweb\googlecontacts\factories\ContactFactory::getAllByURL($TCacheGroupSync[$fk_user][$name]);
+			$group = $g1[0];
+			return $group;
+		}
+		else{
+		
+			$doc = new \DOMDocument();
+			$doc->formatOutput = true;
+			$entry = $doc->createElement('atom:entry');
+			$entry->setAttributeNS('http://www.w3.org/2000/xmlns/', 'xmlns:gd', 'http://schemas.google.com/g/2005');
+			$doc->appendChild($entry);
+			
+			$o = $doc->createElement('atom:title', $name);
+			$o->setAttribute('type', 'text');
+				
+			$entry->appendChild($o);
+			
+			$o = $doc->createElement('gd:extendedProperty');
+			$o->setAttribute('name', 'created by Dolibarr Module GCS');
+			//$o2 = $o->createElement('info','created by Dolibarr Module GCS');
+			$entry->appendChild($o);
+			
+			$o = $doc->createElement('atom:category');
+			$o->setAttribute('scheme', 'http://schemas.google.com/g/2005#kind');
+			$o->setAttribute('term', 'http://schemas.google.com/contact/2008#group');
+			$entry->appendChild($o);
+			
+			$xmlToSend = $doc->saveXML();
+		pre(htmlentities($xmlToSend),true);
+			$client = rapidweb\googlecontacts\helpers\GoogleHelper::getClient();
+			
+			$req = new \Google_Http_Request('https://www.google.com/m8/feeds/groups/'.$user->email.'/full');
+			$req->setRequestHeaders(array('content-type' => 'application/atom+xml; charset=UTF-8; type=feed'));
+			$req->setRequestMethod('POST');
+			$req->setPostBody($xmlToSend);
+			
+			$val = $client->getAuth()->authenticatedRequest($req);
+			
+			$response = $val->getResponseBody();
+				
+			var_dump($response);exit;	
+		}
+		
+		return false;	
+	}
 	
 }

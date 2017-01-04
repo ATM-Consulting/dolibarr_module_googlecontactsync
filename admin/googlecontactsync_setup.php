@@ -150,7 +150,7 @@ echo dol_buildpath('/googlecontactsync/php-google-contacts-v3-api/redirect-handl
 
 print '</td></tr>';
 
-/*
+
 $var=!$var;
 print '<tr '.$bc[$var].'>';
 print '<td>'.$langs->trans("GCS_GOOGLE_GROUP_NAME").'</td>';
@@ -163,7 +163,7 @@ print '<input type="text" name="GCS_GOOGLE_GROUP_NAME" value="'.$conf->global->G
 print '<input type="submit" class="button" value="'.$langs->trans("Modify").'">';
 print '</form>';
 print '</td></tr>';
-*/
+
 print '</table>';
 
 llxFooter();

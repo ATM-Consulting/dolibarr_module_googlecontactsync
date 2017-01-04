@@ -71,7 +71,32 @@ abstract class ContactFactory
 
         return $contactsArray;
     }
-
+    
+    public static function getAllByURL($selfURL)
+    {
+    	$client = GoogleHelper::getClient();
+    
+    	$req = new \Google_Http_Request($selfURL);
+    
+    	$val = $client->getAuth()->authenticatedRequest($req);
+    
+    	$response = $val->getResponseBody();
+    	
+    	$xml =  simplexml_load_string($response);
+    	
+    	//echo pre(htmlentities($xml->children()->entry->asXML()),true);
+    	
+    	$Tab=array();
+    	foreach ($xml->entry as $xmlEntry) {
+    		
+    		$Tab[] = $xmlEntry;
+    		
+    	}
+    	
+    	return $Tab;
+    }
+    
+    
     public static function getBySelfURL($selfURL)
     {
         $client = GoogleHelper::getClient();
@@ -164,7 +189,6 @@ abstract class ContactFactory
         }
         
         //TODO  <gContact:groupMembershipInfo deleted="false" href="http://www.google.com/m8/feeds/groups/test.verdol.gauthier%40gmail.com/base/47a3f7420e9d6466"/>
-         
         
         $updatedXML = $xmlContactsEntry->asXML();
        // pre(htmlentities($updatedXML),true);
