@@ -63,15 +63,16 @@ function _sync() {
 	foreach($TToken as &$token) {
 		
 		$res = $token->sync($PDOdb);
-		$token->to_sync = 0;
-		if($res === false) {
+		$token->to_sync = 0; 
+		// Desactivé pour éviter appel infini
+		/*if($res === false) {
 			$token->to_sync = 1;
 			$token->save($PDOdb);
 		}
-		else{
+		else{*/
 			$token->save($PDOdb);
 			$TSync[] = $token;
-		}
+		//}
 	}
 	
 	
