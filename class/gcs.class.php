@@ -22,20 +22,40 @@ class TGCSToken extends TObjetStd {
 		
 		global $conf,$db,$user,$langs;
 		
-		$object = new \stdClass;
-		
-		if($this->type_object == 'company') {
-			
-			dol_include_once('/societe/class/societe.class.php');	
-			
+		$object = false;
+
+		if($this->type_object == 'company' || $this->type_object == 'societe') {
+				
+			dol_include_once('/societe/class/societe.class.php');
+				
 			$object = new \Societe($db);
-			
+				
 			$object->fetch($this->fk_object);
 			if(empty($object->name)) $object->name = $object->nom;
 		}
 		
-		foreach($object as $k=>&$v) { 
-			if(is_null($v)) $v = '';  
+
+		else if($this->type_object == 'contact') {
+				
+			dol_include_once('/contact/class/contact.class.php');
+				
+			$object = new \Contact($db);
+				
+			$object->fetch($this->fk_object);
+			$object->name = $object->getFullName($langs);
+			$object->email = $object->mail;
+			$object->phone = empty($object->phone_pro) ? $object->phone_perso : $object->phone_pro;
+			$object->fetch_thirdparty();
+			$object->organization = $object->thirdparty->name;
+			
+		}
+		
+		
+		if(is_object($object)) {
+			foreach($object as $k=>&$v) {
+				if(is_null($v)) $v = '';
+			}
+				
 		}
 //var_dump($object);
 		return $object;
@@ -43,7 +63,9 @@ class TGCSToken extends TObjetStd {
 
 	function sync(&$PDOdb) {
 		
-		$object = $this->getObject();		
+		$object = $this->getObject();	
+		
+		if(empty($object)) return false;
 		require_once __DIR__.'/../php-google-contacts-v3-api/vendor/autoload.php';
 		
 		$_SESSION['GCS_fk_user'] = $this->fk_user; // TODO i'm shiting in the rain ! AA 
@@ -63,6 +85,11 @@ class TGCSToken extends TObjetStd {
 		$contact->name = $object->name; 
 		$contact->phoneNumber = $object->phone;
 		$contact->email = $object->email;
+		$contact->postalAddress = $object->address;
+		if(!empty($object->organization)) {
+			$contact->organization = $object->organization ;
+			$contact->organization_title = self::normalize($object->poste);
+		}
 		
 		$contactAfterUpdate = rapidweb\googlecontacts\factories\ContactFactory::submitUpdates($contact);
 		
@@ -125,4 +152,22 @@ class TGCSToken extends TObjetStd {
 		return false;
 	}
 
+	static function setSync(&$PDOdb, $fk_object, $type_object, $fk_user) {
+			
+		if(empty($fk_object) || empty($type_object) ) return false;
+			
+			$token = new TGCSToken;
+			$token->loadByObject($PDOdb, $fk_object, $type_object, $fk_user);
+			$token->fk_object = $fk_object;
+			$token->type_object = $type_object;
+			$token->fk_user = $fk_user;
+			$token->to_sync = 1;
+			$token->save($PDOdb); 
+			
+			global $langs;
+			
+			setEventMessage($langs->trans('SyncObjectInitiated'));
+			
+	}
+	
 }

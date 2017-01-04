@@ -116,7 +116,7 @@ class InterfacegoogleContactSynctrigger
         // Put here code you want to execute when a Dolibarr business events occurs.
         // Data and type of action are stored into $object and $action
         // Users
-        if ($action == 'COMPANY_CREATE' || $action == 'COMPANY_MODIFY') {
+        if ($action == 'COMPANY_CREATE' || $action == 'COMPANY_MODIFY' || $action == 'CONTACT_MODIFY' || $action == 'CONTACT_CREATE') {
         	
 			define('INC_FROM_DOLIBARR',true);
 			dol_include_once('/googlecontactsync/config.php');
@@ -124,14 +124,7 @@ class InterfacegoogleContactSynctrigger
 				  	
 			$PDOdb=new TPDOdb;
 			
-			$token = new TGCSToken;
-			$token->loadByObject($PDOdb, $object->id, 'company', $user->id);
-			$token->fk_object = $object->id;
-			$token->type_object = 'company';
-			$token->fk_user = $user->id;
-			$token->to_sync = 1;
-			$token->save($PDOdb); 
-			
+			TGCSToken::setSync($PDOdb, $object->id, $object->element, $user->id);
 			
             dol_syslog(
                 "Trigger '" . $this->name . "' for action '$action' launched by " . __FILE__ . ". id=" . $object->id

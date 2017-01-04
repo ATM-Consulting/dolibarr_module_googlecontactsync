@@ -138,7 +138,7 @@ print '<tr '.$bc[$var].'>';
 print '<td>'.$langs->trans("GCS_HOST").'</td>';
 print '<td align="center" width="20">&nbsp;</td>';
 print '<td align="right" width="300">';
-echo 'HOSTNAME';
+echo (empty($_SERVER['HTTPS']) ? 'http://' : 'https://') . $_SERVER['HTTP_HOST'];
 
 print '</td></tr>';
 $var=!$var;
@@ -150,7 +150,20 @@ echo dol_buildpath('/googlecontactsync/php-google-contacts-v3-api/redirect-handl
 
 print '</td></tr>';
 
-
+/*
+$var=!$var;
+print '<tr '.$bc[$var].'>';
+print '<td>'.$langs->trans("GCS_GOOGLE_GROUP_NAME").'</td>';
+print '<td align="center" width="20">&nbsp;</td>';
+print '<td align="right" width="300">';
+print '<form method="POST" action="'.$_SERVER['PHP_SELF'].'">';
+print '<input type="hidden" name="token" value="'.$_SESSION['newtoken'].'">';
+print '<input type="hidden" name="action" value="set_GCS_GOOGLE_GROUP_NAME">';
+print '<input type="text" name="GCS_GOOGLE_GROUP_NAME" value="'.$conf->global->GCS_GOOGLE_GROUP_NAME.'" size="80" />';
+print '<input type="submit" class="button" value="'.$langs->trans("Modify").'">';
+print '</form>';
+print '</td></tr>';
+*/
 print '</table>';
 
 llxFooter();

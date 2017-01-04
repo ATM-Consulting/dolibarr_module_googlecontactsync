@@ -148,9 +148,26 @@ abstract class ContactFactory
                 $attributes['uri'] = '';
             }
         }
-
+       
+        if(!empty($updatedContact->postalAddress) && !isset($contactGDNodes->postalAddress)) {
+        	$o = $xmlContactsEntry->addChild('postalAddress',$updatedContact->postalAddress,'http://schemas.google.com/g/2005');
+        	$o->addAttribute('rel', 'http://schemas.google.com/g/2005#work');
+        	$o->addAttribute('primary', 'true');
+        	 
+        }
+        
+        if(!empty($updatedContact->organization) && !isset($contactGDNodes->organization)) {
+        	$o = $xmlContactsEntry->addChild('organization',null,'http://schemas.google.com/g/2005');
+        	$o->addAttribute('rel', 'http://schemas.google.com/g/2005#work');
+        	$o->addChild('orgName',$updatedContact->organization, 'http://schemas.google.com/g/2005');
+        	$o->addChild('orgTitle',$updatedContact->organization_title, 'http://schemas.google.com/g/2005');
+        }
+        
+        //TODO  <gContact:groupMembershipInfo deleted="false" href="http://www.google.com/m8/feeds/groups/test.verdol.gauthier%40gmail.com/base/47a3f7420e9d6466"/>
+         
+        
         $updatedXML = $xmlContactsEntry->asXML();
-
+       // pre(htmlentities($updatedXML),true);
         $req = new \Google_Http_Request($updatedContact->editURL);
         $req->setRequestHeaders(array('content-type' => 'application/atom+xml; charset=UTF-8; type=feed'));
         $req->setRequestMethod('PUT');
@@ -159,7 +176,7 @@ abstract class ContactFactory
         $val = $client->getAuth()->authenticatedRequest($req);
 
         $response = $val->getResponseBody();
-
+     //  var_dump($response); exit;
         $xmlContact = simplexml_load_string($response);
         $xmlContact->registerXPathNamespace('gd', 'http://schemas.google.com/g/2005');
 
@@ -183,7 +200,7 @@ abstract class ContactFactory
         }
 
         $contactGDNodes = $xmlContactsEntry->children('http://schemas.google.com/g/2005');
-
+        
         foreach ($contactGDNodes as $key => $value) {
             $attributes = $value->attributes();
 

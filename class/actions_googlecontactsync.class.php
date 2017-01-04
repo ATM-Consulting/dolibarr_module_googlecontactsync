@@ -64,8 +64,8 @@ class Actionsgooglecontactsync
 	
 		if (in_array('usercard', explode(':', $parameters['context'])))
 		{
-		  
-			
+		  	global $langs;
+			$langs->load('googlecontactsync@googlecontactsync');
 			
 			define('INC_FROM_DOLIBARR',true);
 			dol_include_once('/googlecontactsync/config.php');
@@ -94,6 +94,68 @@ class Actionsgooglecontactsync
 		  	
 		  
 		}
+		
 
+	}
+	
+	function doActions($parameters, &$object, &$action, $hookmanager) {
+		
+		if ((in_array('contactcard', explode(':', $parameters['context']))
+				|| in_array('thirdpartycard', explode(':', $parameters['context'])))
+				&& $action == 'syncToPhone')
+		{
+			global $langs,$user;
+			$langs->load('googlecontactsync@googlecontactsync');
+		
+			define('INC_FROM_DOLIBARR',true);
+			dol_include_once('/googlecontactsync/config.php');
+			dol_include_once('/googlecontactsync/class/gcs.class.php');
+		
+			$PDOdb=new TPDOdb;
+			$token = TGCSToken::getTokenFor($PDOdb, $user->id, 'user');
+		
+			global $langs,$conf,$user,$db;
+		
+			if(!empty($token)) {
+				
+				$fk_object = $object->id;
+				if(empty($fk_object))$fk_object=GETPOST('id');
+				if(empty($fk_object))$fk_object=GETPOST('socid');
+				
+				TGCSToken::setSync($PDOdb,$fk_object, $object->element, $user->id);
+				
+			}
+		
+		}
+	
+	}
+	
+	function addMoreActionsButtons($parameters, &$object, &$action, $hookmanager) {
+		if (in_array('contactcard', explode(':', $parameters['context'])) 
+				|| in_array('thirdpartycard', explode(':', $parameters['context'])))
+		{
+			global $langs,$user;
+			$langs->load('googlecontactsync@googlecontactsync');
+		
+			define('INC_FROM_DOLIBARR',true);
+			dol_include_once('/googlecontactsync/config.php');
+			dol_include_once('/googlecontactsync/class/gcs.class.php');
+		
+			$PDOdb=new TPDOdb;
+			$token = TGCSToken::getTokenFor($PDOdb, $user->id, 'user');
+		
+			global $langs,$conf,$user,$db;
+		
+			if(!empty($token)) {
+				if($object->element == 'contact') {
+					echo '<a class="butAction" href="'.dol_buildpath('/contact/card.php',1).'?id='.$object->id.'&action=syncToPhone">'.$langs->trans('SyncCardToPhone').'</a>';
+				}
+				else if($object->element == 'societe') {
+					echo '<a class="butAction" href="'.dol_buildpath('/societe/soc.php',1).'?socid='.$object->id.'&action=syncToPhone">'.$langs->trans('SyncCardToPhone').'</a>';
+				}
+				
+			}
+		
+		}
 	}
 }
