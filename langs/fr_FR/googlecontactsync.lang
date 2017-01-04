@@ -15,7 +15,7 @@ UserHasToken=Token disponible (renouveller ?)
 SetYourEmailToGetToken=Définissez votre email pour obtenir un token
 GetYourToken =Récupérez votre token de synchronisation
 
-SyncCardToPhone=Syncroniser sur mon téléphone
+SyncCardToPhone=Syncroniser sur Google
 SyncObjectInitiated=Synchronisation de l'élément initié (peut prendre quelques minutes)
 
 GCS_GOOGLE_GROUP_NAME = Nom du groupe où ajouter les contacts (facultatif)

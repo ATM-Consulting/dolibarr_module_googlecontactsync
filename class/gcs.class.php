@@ -62,6 +62,7 @@ class TGCSToken extends TObjetStd {
 	}
 
 	function sync(&$PDOdb) {
+		global $conf;
 		
 		$object = $this->getObject();	
 		
@@ -89,6 +90,13 @@ class TGCSToken extends TObjetStd {
 		if(!empty($object->organization)) {
 			$contact->organization = $object->organization ;
 			$contact->organization_title = self::normalize($object->poste);
+		}
+		
+		if(!empty($conf->global->GCS_GOOGLE_GROUP_NAME)) {
+			
+			$group = self::setGroup($PDOdb, $this->fk_user,$conf->global->GCS_GOOGLE_GROUP_NAME);
+			
+			$contact->groupMembershipInfo = $group->id; 
 		}
 		
 		$contactAfterUpdate = rapidweb\googlecontacts\factories\ContactFactory::submitUpdates($contact);
@@ -171,21 +179,23 @@ class TGCSToken extends TObjetStd {
 	}
 
 	static function setGroup(&$PDOdb, $fk_user, $name) {
-		global $user, $TCacheGroupSync;
+		global $TCacheGroupSync,$db;
+		
+		$user = new User($db);
+		$user->fetch($fk_user);
 		
 		if(empty($TCacheGroupSync[$fk_user]) || isset($_REQUEST['force'])) {
 			$TCacheGroupSync[$fk_user]=array();
-			$TGroup = rapidweb\googlecontacts\factories\ContactFactory::getAllByURL('https://www.google.com/m8/feeds/groups/'.$user->email.'/full');
+			$TGroup = rapidweb\googlecontacts\factories\ContactFactory::getAllByURL('https://www.google.com/m8/feeds/groups/'.urlencode($user->email).'/full');
 			foreach($TGroup as $g) {
 				
-				$TCacheGroupSync[$user->id][(string) $g->title] = (string) $g->id;
+				$TCacheGroupSync[$fk_user][(string) $g->title] =(string) basename($g->id);
 				
 			}
 		}
 		
 		if(isset($TCacheGroupSync[$fk_user][$name])) {
-			$g1 = rapidweb\googlecontacts\factories\ContactFactory::getAllByURL($TCacheGroupSync[$fk_user][$name]);
-			$group = $g1[0];
+			$group = rapidweb\googlecontacts\factories\ContactFactory::getAllByURL('https://www.google.com/m8/feeds/groups/'.urlencode($user->email).'/full/'.$TCacheGroupSync[$fk_user][$name],true);
 			return $group;
 		}
 		else{
@@ -193,18 +203,27 @@ class TGCSToken extends TObjetStd {
 			$doc = new \DOMDocument();
 			$doc->formatOutput = true;
 			$entry = $doc->createElement('atom:entry');
-			$entry->setAttributeNS('http://www.w3.org/2000/xmlns/', 'xmlns:gd', 'http://schemas.google.com/g/2005');
+			$entry->setAttribute('xmlns:atom', 'http://www.w3.org/2005/Atom');
+			$entry->setAttribute('xmlns:gd', 'http://schemas.google.com/g/2005');
+			$entry->setAttribute('xmlns:gContact', 'http://schemas.google.com/contact/2008');
 			$doc->appendChild($entry);
 			
 			$o = $doc->createElement('atom:title', $name);
 			$o->setAttribute('type', 'text');
-				
+			$entry->appendChild($o);
+			
+			$o = $doc->createElement('atom:content', $name);
+			$o->setAttribute('type', 'text');
+			
 			$entry->appendChild($o);
 			
 			$o = $doc->createElement('gd:extendedProperty');
-			$o->setAttribute('name', 'created by Dolibarr Module GCS');
-			//$o2 = $o->createElement('info','created by Dolibarr Module GCS');
+			$o->setAttribute('name', 'more info about the group');
+			
 			$entry->appendChild($o);
+			
+			$o2 = $doc->createElement('info','created by Dolibarr Module GCS');
+			$o->appendChild($o2);
 			
 			$o = $doc->createElement('atom:category');
 			$o->setAttribute('scheme', 'http://schemas.google.com/g/2005#kind');
@@ -212,7 +231,8 @@ class TGCSToken extends TObjetStd {
 			$entry->appendChild($o);
 			
 			$xmlToSend = $doc->saveXML();
-		pre(htmlentities($xmlToSend),true);
+		
+		
 			$client = rapidweb\googlecontacts\helpers\GoogleHelper::getClient();
 			
 			$req = new \Google_Http_Request('https://www.google.com/m8/feeds/groups/'.$user->email.'/full');
@@ -222,9 +242,16 @@ class TGCSToken extends TObjetStd {
 			
 			$val = $client->getAuth()->authenticatedRequest($req);
 			
-			$response = $val->getResponseBody();
+			$response = simplexml_load_string( $val->getResponseBody() );
 				
-			var_dump($response);exit;	
+			if(!empty($response->id)) {
+				
+				$TCacheGroupSync[$fk_user][(string) $response->title] =(string) basename($response->id);
+				return self::setGroup($PDOdb, $fk_user, $name);
+			}
+			
+			return false;
+			
 		}
 		
 		return false;	

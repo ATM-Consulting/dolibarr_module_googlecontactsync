@@ -7,6 +7,8 @@
 	$put = GETPOST('put');
 	$get = GETPOST('get');
 	
+	$_SESSION['GCS_fk_user'] = $user->id;
+	
 switch ($put) {
 	case 'sync':
 		

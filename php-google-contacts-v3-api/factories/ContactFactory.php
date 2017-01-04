@@ -72,19 +72,20 @@ abstract class ContactFactory
         return $contactsArray;
     }
     
-    public static function getAllByURL($selfURL)
+    public static function getAllByURL($selfURL, $full = false)
     {
     	$client = GoogleHelper::getClient();
     
     	$req = new \Google_Http_Request($selfURL);
     
     	$val = $client->getAuth()->authenticatedRequest($req);
-    
+   
     	$response = $val->getResponseBody();
-    	
+    	//pre(htmlentities($response),true);
     	$xml =  simplexml_load_string($response);
-    	
-    	//echo pre(htmlentities($xml->children()->entry->asXML()),true);
+    	if($full) return $xml;
+    	//echo pre($xml,true);
+    	//echo pre(htmlentities($xml->asXML()),true);
     	
     	$Tab=array();
     	foreach ($xml->entry as $xmlEntry) {
@@ -153,10 +154,11 @@ abstract class ContactFactory
         $val = $client->getAuth()->authenticatedRequest($req);
 
         $response = $val->getResponseBody();
-
+       // pre(htmlentities($response),true);
         $xmlContact = simplexml_load_string($response);
         $xmlContact->registerXPathNamespace('gd', 'http://schemas.google.com/g/2005');
-
+        $xmlContact->registerXPathNamespace('gContact', 'http://schemas.google.com/contact/2008');
+        
         $xmlContactsEntry = $xmlContact;
 
         $xmlContactsEntry->title = $updatedContact->name;
@@ -188,10 +190,19 @@ abstract class ContactFactory
         	$o->addChild('orgTitle',$updatedContact->organization_title, 'http://schemas.google.com/g/2005');
         }
         
-        //TODO  <gContact:groupMembershipInfo deleted="false" href="http://www.google.com/m8/feeds/groups/test.verdol.gauthier%40gmail.com/base/47a3f7420e9d6466"/>
+        $contactGCNodes = $xmlContactsEntry->children('http://schemas.google.com/g/2005#kind');
+        
+        
+        if(!empty($updatedContact->groupMembershipInfo) && !isset($contactGCNodes->groupMembershipInfo)) {
+        	$o = $xmlContactsEntry->addChild('groupMembershipInfo',null,'http://schemas.google.com/contact/2008');
+        	$o->addAttribute('delete', 'false');
+        	$o->addAttribute('href', $updatedContact->groupMembershipInfo);
+        }
+          
+        
         
         $updatedXML = $xmlContactsEntry->asXML();
-       // pre(htmlentities($updatedXML),true);
+    //   pre(htmlentities($updatedXML),true);
         $req = new \Google_Http_Request($updatedContact->editURL);
         $req->setRequestHeaders(array('content-type' => 'application/atom+xml; charset=UTF-8; type=feed'));
         $req->setRequestMethod('PUT');
@@ -200,7 +211,7 @@ abstract class ContactFactory
         $val = $client->getAuth()->authenticatedRequest($req);
 
         $response = $val->getResponseBody();
-     //  var_dump($response); exit;
+      //  pre(htmlentities($response),true); exit;
         $xmlContact = simplexml_load_string($response);
         $xmlContact->registerXPathNamespace('gd', 'http://schemas.google.com/g/2005');
 
