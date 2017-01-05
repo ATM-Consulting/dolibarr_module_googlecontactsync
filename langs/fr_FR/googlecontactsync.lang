@@ -19,3 +19,5 @@ SyncCardToPhone=Syncroniser sur Google
 SyncObjectInitiated=Synchronisation de l'élément initié (peut prendre quelques minutes)
 
 GCS_GOOGLE_GROUP_NAME = Nom du groupe où ajouter les contacts (facultatif)
+
+TokenForUser=Token de synchro Google
