@@ -116,7 +116,8 @@ class InterfacegoogleContactSynctrigger
         // Put here code you want to execute when a Dolibarr business events occurs.
         // Data and type of action are stored into $object and $action
         // Users
-        if ($action == 'COMPANY_CREATE' || $action == 'COMPANY_MODIFY' || $action == 'CONTACT_MODIFY' || $action == 'CONTACT_CREATE') {
+        if ( (($action == 'COMPANY_CREATE' || $action == 'COMPANY_MODIFY') && !empty($conf->global->GCS_GOOGLE_SYNC_THIRDPARTY)) 
+        	|| (($action == 'CONTACT_MODIFY' || $action == 'CONTACT_CREATE') && !empty($conf->global->GCS_GOOGLE_SYNC_CONTACT)) ) {
         	
 			define('INC_FROM_DOLIBARR',true);
 			dol_include_once('/googlecontactsync/config.php');

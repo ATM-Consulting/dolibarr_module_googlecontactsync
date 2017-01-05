@@ -164,6 +164,24 @@ print '<input type="submit" class="button" value="'.$langs->trans("Modify").'">'
 print '</form>';
 print '</td></tr>';
 
+$var=!$var;
+print '<tr '.$bc[$var].'>';
+print '<td>'.$langs->trans("GCS_GOOGLE_SYNC_THIRDPARTY").'</td>';
+print '<td align="center" width="20">&nbsp;</td>';
+print '<td align="right" width="300">';
+print ajax_constantonoff('GCS_GOOGLE_SYNC_THIRDPARTY');
+print '</td></tr>';
+
+$var=!$var;
+print '<tr '.$bc[$var].'>';
+print '<td>'.$langs->trans("GCS_GOOGLE_SYNC_CONTACT").'</td>';
+print '<td align="center" width="20">&nbsp;</td>';
+print '<td align="right" width="300">';
+print ajax_constantonoff('GCS_GOOGLE_SYNC_CONTACT');
+print '</td></tr>';
+
+
+
 print '</table>';
 
 llxFooter();

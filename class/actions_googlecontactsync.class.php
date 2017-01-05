@@ -147,10 +147,10 @@ class Actionsgooglecontactsync
 			global $langs,$conf,$user,$db;
 		
 			if(!empty($token)) {
-				if($object->element == 'contact') {
+				if($object->element == 'contact' && !empty($conf->global->GCS_GOOGLE_SYNC_CONTACT)) {
 					echo '<a class="butAction" href="'.dol_buildpath('/contact/card.php',1).'?id='.$object->id.'&action=syncToPhone">'.$langs->trans('SyncCardToPhone').'</a>';
 				}
-				else if($object->element == 'societe') {
+				else if($object->element == 'societe' && !empty($conf->global->GCS_GOOGLE_SYNC_THIRDPARTY)) {
 					echo '<a class="butAction" href="'.dol_buildpath('/societe/soc.php',1).'?socid='.$object->id.'&action=syncToPhone">'.$langs->trans('SyncCardToPhone').'</a>';
 				}
 				

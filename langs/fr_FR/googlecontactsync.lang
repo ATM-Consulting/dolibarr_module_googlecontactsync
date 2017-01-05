@@ -21,3 +21,6 @@ SyncObjectInitiated=Synchronisation de l'élément initié (peut prendre quelque
 GCS_GOOGLE_GROUP_NAME = Nom du groupe où ajouter les contacts (facultatif)
 
 TokenForUser=Token de synchro Google
+
+GCS_GOOGLE_SYNC_CONTACT=Synchroniser les contacts
+GCS_GOOGLE_SYNC_THIRDPARTY=Synchroniser les tiers
