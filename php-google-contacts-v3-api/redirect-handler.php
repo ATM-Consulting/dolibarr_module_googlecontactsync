@@ -14,11 +14,14 @@ require '../config.php';
 $fk_user = $_SESSION['GCS_fk_user'];
 $code = $_GET['code'];
 
+$conf->modules_parts['triggers']=array();
+
 dol_include_once('/googlecontactsync/class/gcs.class.php');
+
+define('GCS_NO_TOKEN',true);
 
 require __DIR__.'/vendor/autoload.php';
 use rapidweb\googlecontacts\helpers\GoogleHelper;
-
 $client = GoogleHelper::getClient();
 GoogleHelper::authenticate($client, $code);
 $accessToken = GoogleHelper::getAccessToken($client);
