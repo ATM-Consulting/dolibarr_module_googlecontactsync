@@ -25,7 +25,7 @@
 			$token->type_object = $type_object;
 			$token->fk_user = $fk_user;
 			$token->to_sync = 0;
-			$token->token = $row->id_record_google;
+			$token->token =strtr( $row->id_record_google, array('http://'=>'https://', '/base/'=>'/full/'));
 
 			$token->save($PDOdb); 			
 	}
@@ -44,7 +44,7 @@
                         $token->type_object = $type_object;
                         $token->fk_user = $fk_user;
                         $token->to_sync = 0;
-                        $token->token = $row->id_record_google;
+			$token->token =strtr( $row->id_record_google, array('http://'=>'https://', '/base/'=>'/full/'));
 
                         $token->save($PDOdb); 
         }
