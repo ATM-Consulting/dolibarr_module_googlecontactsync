@@ -180,6 +180,8 @@ class TGCSToken extends TObjetStd {
 			
 			global $langs;
 			
+			$langs->load('googlecontactsync@googlecontactsync');
+			
 			setEventMessage($langs->trans('SyncObjectInitiated'));
 			
 	}
