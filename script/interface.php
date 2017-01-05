@@ -4,6 +4,8 @@
 	require '../config.php';
 	dol_include_once('/googlecontactsync/class/gcs.class.php');
 	dol_include_once('/googlecontactsync/lib/googlecontactsync.lib.php');
+
+	$conf->modules_parts['triggers']=array();// Ouh que c'est moche mais sinon le trigger de dropcloud passe foutre le merdier
 	
 	$put = GETPOST('put');
 	$get = GETPOST('get');
