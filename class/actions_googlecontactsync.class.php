@@ -61,8 +61,9 @@ class Actionsgooglecontactsync
 	 */
 	function formObjectOptions($parameters, &$object, &$action, $hookmanager)
 	{
-	
-		if (in_array('usercard', explode(':', $parameters['context'])))
+		global $user;
+		if (in_array('usercard', explode(':', $parameters['context']))
+				&& $user->id == $object->id) // action personnelle
 		{
 		  	global $langs;
 			$langs->load('googlecontactsync@googlecontactsync');
@@ -81,9 +82,11 @@ class Actionsgooglecontactsync
 		  	}
 			else if(empty($token)) {
 			    	$button = '<a href="'.dol_buildpath('/googlecontactsync/php-google-contacts-v3-api/authorise-application.php',2).'?fk_user='.$object->id.'">'.$langs->trans('GetYourToken').'</a>';
-			    }
+			}
 			else{
 				$button = '<a href="'.dol_buildpath('/googlecontactsync/php-google-contacts-v3-api/authorise-application.php',2).'?fk_user='.$object->id.'">'.$langs->trans('UserHasToken').'</a>'.img_info('Token : '.$token->token.' - Refresh : '.$token->refresh_token);
+				$button .=' <a href="'.dol_buildpath('/user/card.php',1).'?id='.$object->id.'&action=removeMyToken">'.$langs->trans('Remove').'</a>'.img_info($langs->trans('RemoveToken'));
+				$button .=' <a href="'.dol_buildpath('/user/card.php',1).'?id='.$object->id.'&action=testTokenGoogle">'.$langs->trans('Test').'</a>'.img_info($langs->trans('TestToken'));
 			}
 		  
 		  
@@ -100,7 +103,37 @@ class Actionsgooglecontactsync
 	
 	function doActions($parameters, &$object, &$action, $hookmanager) {
 		
-		if ((in_array('contactcard', explode(':', $parameters['context']))
+		
+		if (in_array('usercard', explode(':', $parameters['context']))
+				&& ($action == 'removeMyToken' || $action=='testTokenGoogle'))
+		{
+			global $langs,$user;
+			$langs->load('googlecontactsync@googlecontactsync');
+			
+			define('INC_FROM_DOLIBARR',true);
+			dol_include_once('/googlecontactsync/config.php');
+			dol_include_once('/googlecontactsync/class/gcs.class.php');
+			
+			if($action=='testTokenGoogle') {
+				
+				dol_include_once('/googlecontactsync/lib/googlecontactsync.lib.php');
+				$TContact  = _getAllContact();
+				if(!empty($TContact[0]->id)) {
+					setEventMessage($langs->trans('TokenSeemsOK'));
+				}
+				else{
+					setEventMessage($langs->trans('TokenSeemsKO'),'warning');
+				}
+			}
+			else {
+				$PDOdb=new TPDOdb;
+				$token = TGCSToken::getTokenFor($PDOdb, $user->id, 'user');
+				$token->delete($PDOdb);
+				
+			}
+			
+		}
+		else if ((in_array('contactcard', explode(':', $parameters['context']))
 				|| in_array('thirdpartycard', explode(':', $parameters['context'])))
 				&& $action == 'syncToPhone')
 		{

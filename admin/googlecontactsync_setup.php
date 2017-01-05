@@ -180,8 +180,6 @@ print '<td align="right" width="300">';
 print ajax_constantonoff('GCS_GOOGLE_SYNC_CONTACT');
 print '</td></tr>';
 
-
-
 print '</table>';
 
 llxFooter();

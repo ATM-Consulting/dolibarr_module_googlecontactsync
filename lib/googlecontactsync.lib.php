@@ -53,3 +53,14 @@ function googlecontactsyncAdminPrepareHead()
 
     return $head;
 }
+
+function _getAllContact() {
+	global $user;
+
+	require_once __DIR__.'/../php-google-contacts-v3-api/vendor/autoload.php';
+
+	$_SESSION['GCS_fk_user'] = $user->id;
+
+	return  \rapidweb\googlecontacts\factories\ContactFactory::getAll();
+
+}
