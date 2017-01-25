@@ -2,6 +2,8 @@
 
 	require '../config.php';
 
+	set_time_limit(0);
+
 	define('INC_FROM_DOLIBARR',true);
 	dol_include_once('/googlecontactsync/config.php');
 	dol_include_once('/googlecontactsync/class/gcs.class.php');
@@ -33,7 +35,7 @@
 	}
 	
 	$Tab = $PDOdb->ExecuteAsArray("SELECT * FROM ".MAIN_DB_PREFIX."zenfusion_contacts_records");
-
+//$Tab=array();
 //	var_dump($Tab);
 	
 				  	
@@ -44,7 +46,8 @@
 
 //		TGCSToken::setSync($PDOdb, $object->id, $object->element, $user->id);
 			$token = new TGCSToken;
-			$token->loadByObject($PDOdb, $fk_object, $type_object, $fk_user);
+			
+			if(!empty($row->id_record_google) &&  !$token->loadByObject($PDOdb, $fk_object, $type_object, $fk_user)) {
 			$token->fk_object = $fk_object;
 			$token->type_object = $type_object;
 			$token->fk_user = $fk_user;
@@ -52,6 +55,7 @@
 			$token->token =strtr( $row->id_record_google, array('http://'=>'https://', '/base/'=>'/full/'));
 
 			$token->save($PDOdb); 			
+			}
 	}
 
 
@@ -63,7 +67,7 @@
                 $fk_user = $row->id_dolibarr_user;
 
                         $token = new TGCSToken;
-                        $token->loadByObject($PDOdb, $fk_object, $type_object, $fk_user);
+                        if(!empty($row->id_record_google) &&  !$token->loadByObject($PDOdb, $fk_object, $type_object, $fk_user)) {
                         $token->fk_object = $fk_object;
                         $token->type_object = $type_object;
                         $token->fk_user = $fk_user;
@@ -71,5 +75,6 @@
 			$token->token =strtr( $row->id_record_google, array('http://'=>'https://', '/base/'=>'/full/'));
 
                         $token->save($PDOdb); 
+			}
         }
 
