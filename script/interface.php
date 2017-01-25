@@ -1,9 +1,12 @@
 <?php
-//	use rapidweb\googlecontacts\factories\ContactFactory;
+	use rapidweb\googlecontacts\factories\ContactFactory;
 
 	require '../config.php';
 	dol_include_once('/googlecontactsync/class/gcs.class.php');
+	dol_include_once('/googlecontactsync/lib/googlecontactsync.lib.php');
 
+	$conf->modules_parts['triggers']=array();// Ouh que c'est moche mais sinon le trigger de dropcloud passe foutre le merdier
+	
 	$put = GETPOST('put');
 	$get = GETPOST('get');
 	
@@ -30,16 +33,6 @@ switch($get) {
 		break;
 }
 
-function _getAllContact() {
-	global $user;
-
-	require_once __DIR__.'/../php-google-contacts-v3-api/vendor/autoload.php';
-
-	$_SESSION['GCS_fk_user'] = $user->id;
-
-	return  \rapidweb\googlecontacts\factories\ContactFactory::getAll();
-
-}
 
 function _setGroup($name) {
 	global $user;

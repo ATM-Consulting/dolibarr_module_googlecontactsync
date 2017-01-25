@@ -2,10 +2,12 @@
 
 class TGCSToken extends TObjetStd {
 
+	static public $table = 'gcs_token';
+	
     function __construct() {
     	global $langs;
 		
-        $this->set_table(MAIN_DB_PREFIX.'gcs_token');
+        $this->set_table(MAIN_DB_PREFIX.self::$table);
 		
 		$this->add_champs('fk_object,fk_user,to_sync',array('type'=>'integer', 'index'=>true));
         $this->add_champs('token,refresh_token,type_object', array('type'=>'string','index'=>true));
@@ -18,7 +20,7 @@ class TGCSToken extends TObjetStd {
 		
 	}
 
-	function getObject() {
+	public function getObject() {
 		
 		global $conf,$db,$user,$langs;
 		
@@ -61,7 +63,7 @@ class TGCSToken extends TObjetStd {
 		return $object;
 	}
 
-	function sync(&$PDOdb) {
+	public function sync(&$PDOdb) {
 		global $conf;
 		
 		$object = $this->getObject();	
@@ -112,15 +114,15 @@ class TGCSToken extends TObjetStd {
 		else return false;
 	}
 
-	static function normalize($value) {
+	private static function normalize($value) {
 		
 		if(empty($value)) $value = 'inconnu';
 		return $value;
 	}
 	
-	function loadByObject(&$PDOdb, $fk_object, $type_object, $fk_user = 0) {
+	public function loadByObject(&$PDOdb, $fk_object, $type_object, $fk_user = 0) {
 		
-		$sql = "SELECT rowid FROM ".MAIN_DB_PREFIX."gcs_token WHERE fk_object=".(int)$fk_object." AND type_object='".$type_object."'";
+		$sql = "SELECT rowid FROM ".MAIN_DB_PREFIX.self::$table." WHERE fk_object=".(int)$fk_object." AND type_object='".$type_object."'";
 		
 		if(!empty($fk_user)) $sql.=" AND fk_user = ".$fk_user;
 		
@@ -133,9 +135,9 @@ class TGCSToken extends TObjetStd {
 		return false;
 	}
 
-	static function getTokenToSync(&$PDOdb, $fk_user = 0, $nb = 5) {
+	public static function getTokenToSync(&$PDOdb, $fk_user = 0, $nb = 5) {
 		
-		$sql = "SELECT rowid FROM ".MAIN_DB_PREFIX."gcs_token WHERE to_sync = 1 ";
+		$sql = "SELECT rowid FROM ".MAIN_DB_PREFIX.self::$table." WHERE to_sync = 1 ";
 		if($fk_user>0)$sql.=" AND fk_user=".$fk_user;
 		
 		$sql.=" LIMIT ".$nb;
@@ -155,7 +157,7 @@ class TGCSToken extends TObjetStd {
 		return $TToken;
 	}
 
-	static function getTokenFor(&$PDOdb, $fk_object, $type_object) {
+	public static function getTokenFor(&$PDOdb, $fk_object, $type_object) {
 	
 		$gcs = new TGCSToken;
 		if($gcs->loadByObject($PDOdb, $fk_object, $type_object)) {
@@ -167,7 +169,20 @@ class TGCSToken extends TObjetStd {
 		return false;
 	}
 
-	static function setSync(&$PDOdb, $fk_object, $type_object, $fk_user) {
+	public static function setSyncAll(TPDOdb &$PDOdb, $fk_object, $type_object) {
+		if(empty($fk_object) || empty($type_object) ) return false;
+		
+		$TUser = $PDOdb->ExecuteAsArray("SELECT fk_object FROM ".MAIN_DB_PREFIX.self::$table."
+				WHERE type_object='user' AND refresh_token!='' ");
+	//	var_dump($TUser);exit;
+		foreach($TUser as &$u) {
+			self::setSync($PDOdb, $fk_object, $type_object, $u->fk_object);
+		}
+		
+		
+	}
+	
+	public static function setSync(&$PDOdb, $fk_object, $type_object, $fk_user) {
 			
 		if(empty($fk_object) || empty($type_object) ) return false;
 			
@@ -183,11 +198,14 @@ class TGCSToken extends TObjetStd {
 			
 			$langs->load('googlecontactsync@googlecontactsync');
 			
-			setEventMessage($langs->trans('SyncObjectInitiated'));
+			global $google_sync_message_sync_ok;
 			
+			if(empty($google_sync_message_sync_ok)) setEventMessage($langs->trans('SyncObjectInitiated'));
+			
+			$google_sync_message_sync_ok = true;
 	}
 
-	static function setGroup(&$PDOdb, $fk_user, $name) {
+	public static function setGroup(&$PDOdb, $fk_user, $name) {
 		global $TCacheGroupSync,$db;
 		
 		$user = new User($db);
