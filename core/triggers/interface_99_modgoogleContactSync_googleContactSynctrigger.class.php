@@ -122,10 +122,16 @@ class InterfacegoogleContactSynctrigger
 			define('INC_FROM_DOLIBARR',true);
 			dol_include_once('/googlecontactsync/config.php');
 			dol_include_once('/googlecontactsync/class/gcs.class.php');
-				  	
+			
 			$PDOdb=new TPDOdb;
 			
-			TGCSToken::setSync($PDOdb, $object->id, $object->element, $user->id);
+			if(!empty($conf->global->GCS_GOOGLE_SYNC_CONTACT_ALL_USER)) {
+				TGCSToken::setSyncAll($PDOdb, $object->id, $object->element);
+			}
+			else{
+				TGCSToken::setSync($PDOdb, $object->id, $object->element, $user->id);
+			}
+			
 			
             dol_syslog(
                 "Trigger '" . $this->name . "' for action '$action' launched by " . __FILE__ . ". id=" . $object->id
