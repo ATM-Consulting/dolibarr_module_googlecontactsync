@@ -107,9 +107,15 @@ abstract class ContactFactory
         $val = $client->getAuth()->authenticatedRequest($req);
 
         $response = $val->getResponseBody();
-/*var_dump($val);
-echo $response;exit;*/
+//var_dump($selfURL,$client->getAuth(),$val);
+//echo $response;exit;
         $xmlContact = simplexml_load_string($response);
+
+	if($xmlContact === false) {
+		echo "Wrong call : ".$selfURL."<br />";
+		return false;
+	}
+
         $xmlContact->registerXPathNamespace('gd', 'http://schemas.google.com/g/2005');
 
         $xmlContactsEntry = $xmlContact;
