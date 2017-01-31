@@ -74,11 +74,11 @@ class TGCSToken extends TObjetStd {
 		$_SESSION['GCS_fk_user'] = $this->fk_user; // TODO i'm shiting in the rain ! AA 
 		
 		$TPhone = array();
-		if(!empty($object->phone)) $TPhone[] =$object->phone;
-		if(!empty($object->phone_perso)) $TPhone[] =$object->phone_perso; //TODO add other phone to card
-		if(!empty($object->phone_mobile)) $TPhone[] =$object->phone_mobile;
+		if(!empty($object->phone)) $TPhone['work'] =$object->phone;
+		if(!empty($object->phone_perso)) $TPhone['perso'] =$object->phone_perso; 
+		if(!empty($object->phone_mobile)) $TPhone['mobile'] =$object->phone_mobile;
 		
-		$object->phone = self::normalize($TPhone[0]);
+		$object->phone = self::normalize($TPhone['work']);
 		$object->email = self::normalize($object->email);
 		if($this->token) {
 			$contact = rapidweb\googlecontacts\factories\ContactFactory::getBySelfURL($this->token);	
@@ -94,6 +94,9 @@ class TGCSToken extends TObjetStd {
 		$contact->name = $object->name;
 		
 		$contact->phoneNumber = $object->phone;
+		
+		$contact->phoneNumbers = $TPhone;
+		
 		$contact->email = $object->email;
 		$contact->postalAddress = $object->address.', '.$object->zip.' '.$object->town;
 		if(!empty($object->organization)) {

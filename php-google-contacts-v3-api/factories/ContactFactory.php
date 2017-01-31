@@ -115,7 +115,9 @@ abstract class ContactFactory
 		echo "Wrong call : ".$selfURL."<br />";
 		return false;
 	}
-
+/*echo $selfURL;
+	pre($xmlContact,true);exit;
+	*/
         $xmlContact->registerXPathNamespace('gd', 'http://schemas.google.com/g/2005');
 
         $xmlContactsEntry = $xmlContact;
@@ -142,13 +144,22 @@ abstract class ContactFactory
         foreach ($contactGDNodes as $key => $value) {
             $attributes = $value->attributes();
 
-            if ($key == 'email') {
+            if($key == 'phoneNumber') {
+            	if(empty($contactDetails['phoneNumber']))$contactDetails['phoneNumber']=array();
+            	$contactDetails['phoneNumber'][] = array(
+            			'value'=>(string)$value
+            			,'label'=>(string) $attributes['label'][0]
+            			,'rel'=>(string) $attributes['rel']
+            	) ;
+            }
+            
+            else if ($key == 'email') {
                 $contactDetails[$key] = (string) $attributes['address'];
             } else {
                 $contactDetails[$key] = (string) $value;
             }
         }
-
+//pre($contactDetails,true);exit;
         return new Contact($contactDetails);
     }
 
@@ -178,18 +189,66 @@ abstract class ContactFactory
 			
 			if ($key == 'email') {
                 $attributes['address'] = $updatedContact->email;
-            } else {
+            } elseif($key!='phoneNumber') {
+            	
                 $xmlContactsEntry->$key = $updatedContact->$key;
                 $attributes['uri'] = '';
             }
         }
-       
+     
+        foreach($contactGDNodes->phoneNumber as $key=>$phone) {
+        	$att = $phone->attributes();
+        	@        	$rel = $att['rel'];
+        	@        	$label = $att['label'];
+        	 
+        	$att['uri'] = '';
+        	
+			if($rel == 'http://schemas.google.com/g/2005#work') {
+				$phone->{0} = $updatedContact->phoneNumbers['work'];
+				unset($updatedContact->phoneNumbers['work']);
+			}
+        	else if($rel == 'http://schemas.google.com/g/2005#work_mobile' 
+        			|| $label=='work mobile') {
+        		$phone->{0} = $updatedContact->phoneNumbers['mobile'];
+        		unset($updatedContact->phoneNumbers['mobile']);
+        		
+        	}
+        	else if($rel == 'http://schemas.google.com/g/2005#mobile') {
+        		$phone->{0} = $updatedContact->phoneNumbers['perso'];
+        		unset($updatedContact->phoneNumbers['perso']);
+        	}
+        }
+        
+        foreach($updatedContact->phoneNumbers as $type=>$number) {
+        	
+        	if($type == 'work') $rel ='http://schemas.google.com/g/2005#work';
+        	else if($type == 'mobile') $rel ='http://schemas.google.com/g/2005#work_mobile';
+        	else if($type == 'perso') $rel ='http://schemas.google.com/g/2005#mobile';
+        	else continue;
+        	
+        	$o = $xmlContactsEntry->addChild('phoneNumber',$number,'http://schemas.google.com/g/2005');
+        	$o->addAttribute('rel', $rel);
+        	 
+        	
+        }
+        
         if(!empty($updatedContact->postalAddress) && !isset($contactGDNodes->postalAddress)) {
         	$o = $xmlContactsEntry->addChild('postalAddress',$updatedContact->postalAddress,'http://schemas.google.com/g/2005');
         	$o->addAttribute('rel', 'http://schemas.google.com/g/2005#work');
         	$o->addAttribute('primary', 'true');
         	 
         }
+        
+        /*
+         * <gd:structuredPostalAddress mailClass='http://schemas.google.com/g/2005#letters' label='John at Google'>
+  <gd:street>1600 Amphitheatre Parkway</gd:street>
+  <gd:city>Mountain View</gd:city>
+  <gd:region>CA</gd:region>
+  <gd:postcode>94043</gd:postcode>
+</gd:structuredPostalAddress>
+gd:country?
+         * 
+         */
         
         if(!empty($updatedContact->organization) && !isset($contactGDNodes->organization)) {
         	$o = $xmlContactsEntry->addChild('organization',null,'http://schemas.google.com/g/2005');
@@ -210,7 +269,7 @@ abstract class ContactFactory
         
         
         $updatedXML = $xmlContactsEntry->asXML();
-    //   pre(htmlentities($updatedXML),true);
+  //     pre(htmlentities($updatedXML),true);exit;
         $req = new \Google_Http_Request($updatedContact->editURL);
         $req->setRequestHeaders(array('content-type' => 'application/atom+xml; charset=UTF-8; type=feed'));
         $req->setRequestMethod('PUT');
@@ -219,7 +278,7 @@ abstract class ContactFactory
         $val = $client->getAuth()->authenticatedRequest($req);
 
         $response = $val->getResponseBody();
-      //  pre(htmlentities($response),true); exit;
+     //   pre(htmlentities($response),true); exit;
         $xmlContact = simplexml_load_string($response);
         $xmlContact->registerXPathNamespace('gd', 'http://schemas.google.com/g/2005');
 
