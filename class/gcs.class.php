@@ -77,6 +77,7 @@ class TGCSToken extends TObjetStd {
 		if(!empty($object->phone)) $TPhone['work'] =$object->phone;
 		if(!empty($object->phone_perso)) $TPhone['perso'] =$object->phone_perso; 
 		if(!empty($object->phone_mobile)) $TPhone['mobile'] =$object->phone_mobile;
+		if(!empty($object->fax)) $TPhone['fax'] =$object->fax;
 		
 		$object->phone = self::normalize($TPhone['work']);
 		$object->email = self::normalize($object->email);

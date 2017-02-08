@@ -189,7 +189,7 @@ abstract class ContactFactory
 			
 			if ($key == 'email') {
                 $attributes['address'] = $updatedContact->email;
-            } elseif($key!='phoneNumber') {
+            } elseif($key!='phoneNumber' && !is_array($updatedContact->$key)) {
             	
                 $xmlContactsEntry->$key = $updatedContact->$key;
                 $attributes['uri'] = '';
@@ -217,6 +217,10 @@ abstract class ContactFactory
         		$phone->{0} = $updatedContact->phoneNumbers['perso'];
         		unset($updatedContact->phoneNumbers['perso']);
         	}
+        	else if($rel == 'http://schemas.google.com/g/2005#fax') {
+        		$phone->{0} = $updatedContact->phoneNumbers['fax'];
+        		unset($updatedContact->phoneNumbers['fax']);
+        	}
         }
         
         foreach($updatedContact->phoneNumbers as $type=>$number) {
@@ -224,7 +228,8 @@ abstract class ContactFactory
         	if($type == 'work') $rel ='http://schemas.google.com/g/2005#work';
         	else if($type == 'mobile') $rel ='http://schemas.google.com/g/2005#work_mobile';
         	else if($type == 'perso') $rel ='http://schemas.google.com/g/2005#mobile';
-        	else continue;
+        	else if($type == 'fax') $rel ='http://schemas.google.com/g/2005#fax';
+        	 else continue;
         	
         	$o = $xmlContactsEntry->addChild('phoneNumber',$number,'http://schemas.google.com/g/2005');
         	$o->addAttribute('rel', $rel);
