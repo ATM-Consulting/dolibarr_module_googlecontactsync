@@ -100,7 +100,13 @@ class TGCSToken extends TObjetStd {
 		
 		$contact->email = $object->email;
 		
-		if($object->address || $object->zip || $object->town) $contact->postalAddress = $object->address.', '.$object->zip.' '.$object->town;
+		if($object->address || $object->zip || $object->town) {
+			$contact->postalAddress = trim($object->address);
+			if($object->zip || $object->town) {
+				if(!empty($contact->postalAddress))$contact->postalAddress.=', ';	
+				$contact->postalAddress.=trim($object->zip.' '.$object->town);
+			}
+		}
 		if(!empty($object->organization)) {
 			$contact->organization = $object->organization ;
 			$contact->organization_title = self::normalize($object->poste);

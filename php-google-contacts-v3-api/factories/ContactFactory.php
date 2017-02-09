@@ -215,9 +215,8 @@ abstract class ContactFactory
         	 
         	
         }
-        
         if(!empty($updatedContact->postalAddress)) {
-        	unset($xmlContactsEntry->postalAddress);
+        	unset($contactGDNodes->postalAddress);
         	
         	$o = $xmlContactsEntry->addChild('postalAddress',$updatedContact->postalAddress,'http://schemas.google.com/g/2005');
         	$o->addAttribute('rel', 'http://schemas.google.com/g/2005#work');
@@ -237,7 +236,7 @@ gd:country?
          */
         
         if(!empty($updatedContact->organization)) {
-        	unset($xmlContactsEntry->organization);
+        	unset($contactGDNodes->organization);
         	$o = $xmlContactsEntry->addChild('organization',null,'http://schemas.google.com/g/2005');
         	$o->addAttribute('rel', 'http://schemas.google.com/g/2005#work');
         	$o->addChild('orgName',$updatedContact->organization, 'http://schemas.google.com/g/2005');
@@ -248,7 +247,7 @@ gd:country?
         
         
         if(!empty($updatedContact->groupMembershipInfo)) {
-        	unset($xmlContactsEntry->groupMembershipInfo);
+        	unset($contactGDNodes->groupMembershipInfo);
         	$o = $xmlContactsEntry->addChild('groupMembershipInfo',null,'http://schemas.google.com/contact/2008');
         	$o->addAttribute('delete', 'false');
         	$o->addAttribute('href', $updatedContact->groupMembershipInfo);
@@ -257,7 +256,7 @@ gd:country?
         
         
         $updatedXML = $xmlContactsEntry->asXML();
-  //   pre(htmlentities($updatedXML),true);
+     //pre(htmlentities($updatedXML),true);
         $req = new \Google_Http_Request($updatedContact->editURL);
         $req->setRequestHeaders(array('content-type' => 'application/atom+xml; charset=UTF-8; type=feed'));
         $req->setRequestMethod('PUT');
@@ -266,7 +265,7 @@ gd:country?
         $val = $client->getAuth()->authenticatedRequest($req);
 
         $response = $val->getResponseBody();
-  //    pre(htmlentities($response),true); exit;
+      //pre(htmlentities($response),true); exit;
         $xmlContact = simplexml_load_string($response);
         $xmlContact->registerXPathNamespace('gd', 'http://schemas.google.com/g/2005');
 
