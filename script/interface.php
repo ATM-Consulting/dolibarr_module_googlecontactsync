@@ -51,7 +51,7 @@ function _sync() {
 	$PDOdb=new \TPDOdb;
 	
 	$TToken = \TGCSToken::getTokenToSync($PDOdb,$user->id);
-	
+
 	$TSync=array();
 	foreach($TToken as &$token) {
 		

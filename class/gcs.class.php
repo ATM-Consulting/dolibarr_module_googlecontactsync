@@ -77,6 +77,7 @@ class TGCSToken extends TObjetStd {
 		if(!empty($object->phone)) $TPhone['work'] =$object->phone;
 		if(!empty($object->phone_perso)) $TPhone['perso'] =$object->phone_perso; 
 		if(!empty($object->phone_mobile)) $TPhone['mobile'] =$object->phone_mobile;
+		if(!empty($object->fax)) $TPhone['fax'] =$object->fax;
 		
 		$object->phone = self::normalize($TPhone['work']);
 		$object->email = self::normalize($object->email);
@@ -98,7 +99,14 @@ class TGCSToken extends TObjetStd {
 		$contact->phoneNumbers = $TPhone;
 		
 		$contact->email = $object->email;
-		$contact->postalAddress = $object->address.', '.$object->zip.' '.$object->town;
+		
+		if($object->address || $object->zip || $object->town) {
+			$contact->postalAddress = trim($object->address);
+			if($object->zip || $object->town) {
+				if(!empty($contact->postalAddress))$contact->postalAddress.=', ';	
+				$contact->postalAddress.=trim($object->zip.' '.$object->town);
+			}
+		}
 		if(!empty($object->organization)) {
 			$contact->organization = $object->organization ;
 			$contact->organization_title = self::normalize($object->poste);
@@ -119,7 +127,7 @@ class TGCSToken extends TObjetStd {
 
 	private static function normalize($value) {
 		
-		if(empty($value)) $value = 'inconnu';
+		//if(empty($value)) $value = 'inconnu';
 		return $value;
 	}
 	

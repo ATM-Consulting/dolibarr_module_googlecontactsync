@@ -187,52 +187,37 @@ abstract class ContactFactory
         foreach ($contactGDNodes as $key => $value) {
             $attributes = $value->attributes();
 			
+            if(isset($updatedContact->$key) && $updatedContact->$key == '') {
+            	unset($xmlContactsEntry->$key); continue;
+            }
+            
 			if ($key == 'email') {
                 $attributes['address'] = $updatedContact->email;
-            } elseif($key!='phoneNumber') {
+            } elseif($key!='phoneNumber' && !is_array($updatedContact->$key)) {
             	
                 $xmlContactsEntry->$key = $updatedContact->$key;
                 $attributes['uri'] = '';
             }
         }
      
-        foreach($contactGDNodes->phoneNumber as $key=>$phone) {
-        	$att = $phone->attributes();
-        	@        	$rel = $att['rel'];
-        	@        	$label = $att['label'];
-        	 
-        	$att['uri'] = '';
-        	
-			if($rel == 'http://schemas.google.com/g/2005#work') {
-				$phone->{0} = $updatedContact->phoneNumbers['work'];
-				unset($updatedContact->phoneNumbers['work']);
-			}
-        	else if($rel == 'http://schemas.google.com/g/2005#work_mobile' 
-        			|| $label=='work mobile') {
-        		$phone->{0} = $updatedContact->phoneNumbers['mobile'];
-        		unset($updatedContact->phoneNumbers['mobile']);
-        		
-        	}
-        	else if($rel == 'http://schemas.google.com/g/2005#mobile') {
-        		$phone->{0} = $updatedContact->phoneNumbers['perso'];
-        		unset($updatedContact->phoneNumbers['perso']);
-        	}
-        }
+     	unset($xmlContactsEntry->phoneNumber);
         
         foreach($updatedContact->phoneNumbers as $type=>$number) {
         	
         	if($type == 'work') $rel ='http://schemas.google.com/g/2005#work';
         	else if($type == 'mobile') $rel ='http://schemas.google.com/g/2005#work_mobile';
         	else if($type == 'perso') $rel ='http://schemas.google.com/g/2005#mobile';
-        	else continue;
+        	else if($type == 'fax') $rel ='http://schemas.google.com/g/2005#fax';
+        	 else continue;
         	
         	$o = $xmlContactsEntry->addChild('phoneNumber',$number,'http://schemas.google.com/g/2005');
         	$o->addAttribute('rel', $rel);
         	 
         	
         }
-        
-        if(!empty($updatedContact->postalAddress) && !isset($contactGDNodes->postalAddress)) {
+        if(!empty($updatedContact->postalAddress)) {
+        	unset($contactGDNodes->postalAddress);
+        	
         	$o = $xmlContactsEntry->addChild('postalAddress',$updatedContact->postalAddress,'http://schemas.google.com/g/2005');
         	$o->addAttribute('rel', 'http://schemas.google.com/g/2005#work');
         	$o->addAttribute('primary', 'true');
@@ -250,17 +235,19 @@ gd:country?
          * 
          */
         
-        if(!empty($updatedContact->organization) && !isset($contactGDNodes->organization)) {
+        if(!empty($updatedContact->organization)) {
+        	unset($contactGDNodes->organization);
         	$o = $xmlContactsEntry->addChild('organization',null,'http://schemas.google.com/g/2005');
         	$o->addAttribute('rel', 'http://schemas.google.com/g/2005#work');
         	$o->addChild('orgName',$updatedContact->organization, 'http://schemas.google.com/g/2005');
-        	$o->addChild('orgTitle',$updatedContact->organization_title, 'http://schemas.google.com/g/2005');
+        	if(!empty($updatedContact->organization_title)) $o->addChild('orgTitle',$updatedContact->organization_title, 'http://schemas.google.com/g/2005');
         }
         
         $contactGCNodes = $xmlContactsEntry->children('http://schemas.google.com/g/2005#kind');
         
         
-        if(!empty($updatedContact->groupMembershipInfo) && !isset($contactGCNodes->groupMembershipInfo)) {
+        if(!empty($updatedContact->groupMembershipInfo)) {
+        	unset($contactGDNodes->groupMembershipInfo);
         	$o = $xmlContactsEntry->addChild('groupMembershipInfo',null,'http://schemas.google.com/contact/2008');
         	$o->addAttribute('delete', 'false');
         	$o->addAttribute('href', $updatedContact->groupMembershipInfo);
@@ -269,7 +256,7 @@ gd:country?
         
         
         $updatedXML = $xmlContactsEntry->asXML();
-  //     pre(htmlentities($updatedXML),true);exit;
+     //pre(htmlentities($updatedXML),true);
         $req = new \Google_Http_Request($updatedContact->editURL);
         $req->setRequestHeaders(array('content-type' => 'application/atom+xml; charset=UTF-8; type=feed'));
         $req->setRequestMethod('PUT');
@@ -278,7 +265,7 @@ gd:country?
         $val = $client->getAuth()->authenticatedRequest($req);
 
         $response = $val->getResponseBody();
-     //   pre(htmlentities($response),true); exit;
+      //pre(htmlentities($response),true); exit;
         $xmlContact = simplexml_load_string($response);
         $xmlContact->registerXPathNamespace('gd', 'http://schemas.google.com/g/2005');
 
@@ -316,7 +303,7 @@ gd:country?
         return new Contact($contactDetails);
     }
 
-    public static function create($name, $phoneNumber, $emailAddress)
+    public static function create($name)
     {
     	$doc = new \DOMDocument();
         $doc->formatOutput = true;
@@ -328,15 +315,6 @@ gd:country?
 
         $title = $doc->createElement('title', $name);
         $entry->appendChild($title);
-
-        $email = $doc->createElement('gd:email');
-        $email->setAttribute('rel', 'http://schemas.google.com/g/2005#work');
-        $email->setAttribute('address', $emailAddress);
-        $entry->appendChild($email);
-
-        $contact = $doc->createElement('gd:phoneNumber', $phoneNumber);
-        $contact->setAttribute('rel', 'http://schemas.google.com/g/2005#work');
-        $entry->appendChild($contact);
 
         $xmlToSend = $doc->saveXML();
         $client = GoogleHelper::getClient();
