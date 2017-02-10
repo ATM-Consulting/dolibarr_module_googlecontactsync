@@ -200,8 +200,17 @@ abstract class ContactFactory
             }
         }
      
-     	unset($xmlContactsEntry->phoneNumber);
+        if(!empty($updatedContact->email)) {
+        	unset($contactGDNodes->email);
+        	 
+        	$o = $xmlContactsEntry->addChild('email',null,'http://schemas.google.com/g/2005');
+        	$o->addAttribute('address',$updatedContact->email);
+        	$o->addAttribute('rel',"http://schemas.google.com/g/2005#work");
         
+        }
+       
+        
+     	unset($xmlContactsEntry->phoneNumber);
         foreach($updatedContact->phoneNumbers as $type=>$number) {
         	
         	if($type == 'work') $rel ='http://schemas.google.com/g/2005#work';
@@ -256,7 +265,7 @@ gd:country?
         
         
         $updatedXML = $xmlContactsEntry->asXML();
-     //pre(htmlentities($updatedXML),true);
+     pre(htmlentities($updatedXML),true);
         $req = new \Google_Http_Request($updatedContact->editURL);
         $req->setRequestHeaders(array('content-type' => 'application/atom+xml; charset=UTF-8; type=feed'));
         $req->setRequestMethod('PUT');
@@ -265,7 +274,7 @@ gd:country?
         $val = $client->getAuth()->authenticatedRequest($req);
 
         $response = $val->getResponseBody();
-      //pre(htmlentities($response),true); exit;
+      pre(htmlentities($response),true); exit;
         $xmlContact = simplexml_load_string($response);
         $xmlContact->registerXPathNamespace('gd', 'http://schemas.google.com/g/2005');
 
