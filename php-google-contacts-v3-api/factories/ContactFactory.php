@@ -265,7 +265,7 @@ gd:country?
         
         
         $updatedXML = $xmlContactsEntry->asXML();
-     pre(htmlentities($updatedXML),true);
+     //pre(htmlentities($updatedXML),true);
         $req = new \Google_Http_Request($updatedContact->editURL);
         $req->setRequestHeaders(array('content-type' => 'application/atom+xml; charset=UTF-8; type=feed'));
         $req->setRequestMethod('PUT');
@@ -274,7 +274,7 @@ gd:country?
         $val = $client->getAuth()->authenticatedRequest($req);
 
         $response = $val->getResponseBody();
-      pre(htmlentities($response),true); exit;
+      //pre(htmlentities($response),true); exit;
         $xmlContact = simplexml_load_string($response);
         $xmlContact->registerXPathNamespace('gd', 'http://schemas.google.com/g/2005');
 

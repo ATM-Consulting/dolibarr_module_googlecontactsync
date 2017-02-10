@@ -63,7 +63,7 @@ function _sync() {
 			$token->save($PDOdb);
 		}
 		else{*/
-			//$token->save($PDOdb);
+			$token->save($PDOdb);
 			$TSync[] = $token;
 		//}
 	}
