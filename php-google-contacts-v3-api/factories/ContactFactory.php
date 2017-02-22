@@ -183,6 +183,7 @@ abstract class ContactFactory
         $xmlContactsEntry->title = $updatedContact->name;
 
         $contactGDNodes = $xmlContactsEntry->children('http://schemas.google.com/g/2005');
+	$contactGContactNodes = $xmlContactsEntry->children('http://schemas.google.com/contact/2008');
 
         foreach ($contactGDNodes as $key => $value) {
             $attributes = $value->attributes();
@@ -224,13 +225,13 @@ abstract class ContactFactory
         	 
         	
         }
+
         if(!empty($updatedContact->postalAddress)) {
         	unset($contactGDNodes->postalAddress);
         	
         	$o = $xmlContactsEntry->addChild('postalAddress',$updatedContact->postalAddress,'http://schemas.google.com/g/2005');
         	$o->addAttribute('rel', 'http://schemas.google.com/g/2005#work');
         	$o->addAttribute('primary', 'true');
-        	 
         }
         
         /*
@@ -244,8 +245,17 @@ gd:country?
          * 
          */
         
-        if(!empty($updatedContact->organization)) {
-        	unset($contactGDNodes->organization);
+        unset($contactGContactNodes->website);
+	if (! empty($updatedContact->website))
+	{
+		$o = $xmlContactsEntry->addChild('website', null, 'http://schemas.google.com/contact/2008');
+		foreach($updatedContact->website as $name=>$value) {
+			$o->addAttribute($name, $value);
+		}
+	}
+
+        unset($contactGDNodes->organization);
+        if(false && !empty($updatedContact->organization)) {
         	$o = $xmlContactsEntry->addChild('organization',null,'http://schemas.google.com/g/2005');
         	$o->addAttribute('rel', 'http://schemas.google.com/g/2005#work');
         	$o->addChild('orgName',$updatedContact->organization, 'http://schemas.google.com/g/2005');
@@ -254,18 +264,15 @@ gd:country?
         
         $contactGCNodes = $xmlContactsEntry->children('http://schemas.google.com/g/2005#kind');
         
-        
         if(!empty($updatedContact->groupMembershipInfo)) {
         	unset($contactGDNodes->groupMembershipInfo);
         	$o = $xmlContactsEntry->addChild('groupMembershipInfo',null,'http://schemas.google.com/contact/2008');
         	$o->addAttribute('delete', 'false');
         	$o->addAttribute('href', $updatedContact->groupMembershipInfo);
         }
-          
-        
-        
+
         $updatedXML = $xmlContactsEntry->asXML();
-     //pre(htmlentities($updatedXML),true);
+     	pre(htmlentities($updatedXML),true);
         $req = new \Google_Http_Request($updatedContact->editURL);
         $req->setRequestHeaders(array('content-type' => 'application/atom+xml; charset=UTF-8; type=feed'));
         $req->setRequestMethod('PUT');
@@ -274,7 +281,7 @@ gd:country?
         $val = $client->getAuth()->authenticatedRequest($req);
 
         $response = $val->getResponseBody();
-      //pre(htmlentities($response),true); exit;
+      	pre(htmlentities($response),true);
         $xmlContact = simplexml_load_string($response);
         $xmlContact->registerXPathNamespace('gd', 'http://schemas.google.com/g/2005');
 
