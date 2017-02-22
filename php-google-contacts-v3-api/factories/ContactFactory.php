@@ -173,7 +173,7 @@ abstract class ContactFactory
         $val = $client->getAuth()->authenticatedRequest($req);
 
         $response = $val->getResponseBody();
-       // pre(htmlentities($response),true);
+        pre(htmlentities($response),true);exit;
         $xmlContact = simplexml_load_string($response);
         $xmlContact->registerXPathNamespace('gd', 'http://schemas.google.com/g/2005');
         $xmlContact->registerXPathNamespace('gContact', 'http://schemas.google.com/contact/2008');
