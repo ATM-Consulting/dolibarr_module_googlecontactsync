@@ -37,6 +37,7 @@ class TGCSToken extends TObjetStd {
 				
 			$object->fetch($this->fk_object);
 			$object->dolibarrUrl = dol_buildpath('societe/soc.php?socid='.$this->fk_object, 2);
+
 			if(empty($object->name)) $object->name = $object->nom;
 
 			if($object->client) {
@@ -95,6 +96,7 @@ class TGCSToken extends TObjetStd {
 		global $conf;
 
 		$object = $this->getObject();	
+//var_dump($object);
 		if(empty($object)) return false;
 		require_once __DIR__.'/../php-google-contacts-v3-api/vendor/autoload.php';
 		
@@ -127,10 +129,10 @@ class TGCSToken extends TObjetStd {
 		
 		$contact->email = $object->email;
 
-		$contact->website = array(
-			'href' => $object->dolibarrUrl
-			,'label' => 'URL Dolibarr'
-		);
+		$contact->website = $object->dolibarrUrl;
+
+		if(! empty($object->code_client)) $contact->code_client = $object->code_client;
+		if(! empty($object->code_fournisseur)) $contact->code_fournisseur = $object->code_fournisseur;
 
 		if($object->address || $object->zip || $object->town) {
 			$contact->postalAddress = trim($object->address);

@@ -170,6 +170,10 @@ abstract class ContactFactory
 
     public static function submitUpdates(Contact $updatedContact)
     {
+	global $langs;
+	$langs->load('companies');
+	$langs->load('googlecontactsync@googlecontactsync');
+
         $client = GoogleHelper::getClient();
 // var_dump($updatedContact);
 //exit($updatedContact->selfURL);
@@ -182,7 +186,7 @@ abstract class ContactFactory
         $val = $client->getAuth()->authenticatedRequest($req);
 
         $response = $val->getResponseBody();
-        // pre(htmlentities($response),true); //exit;
+        //pre(htmlentities($response), true);
         $xmlContact = simplexml_load_string($response);
         $xmlContact->registerXPathNamespace('gd', 'http://schemas.google.com/g/2005');
         $xmlContact->registerXPathNamespace('gContact', 'http://schemas.google.com/contact/2008');
@@ -257,9 +261,8 @@ gd:country?
 	if (! empty($updatedContact->website))
 	{
 		$o = $xmlContactsEntry->addChild('website', null, 'http://schemas.google.com/contact/2008');
-		foreach($updatedContact->website as $name=>$value) {
-			$o->addAttribute($name, $value);
-		}
+		$o->addAttribute('href', $updatedContact->website);
+		$o->addAttribute('label', $langs->trans('DolibarrURL'));
 	}
 
         unset($contactGDNodes->organization);
@@ -280,6 +283,22 @@ gd:country?
         		$o->addAttribute('href', $group);
 		}
         }
+
+	if(!empty($updatedContact->code_client) || !empty($updatedContact->code_fournisseur)) {
+		unset($contactGContactNodes->userDefinedField);
+
+		if(!empty($updatedContact->code_client)) {
+			$o = $xmlContactsEntry->addChild('userDefinedField', null, 'http://schemas.google.com/contact/2008');
+			$o->addAttribute('key', $langs->trans('CustomerCode'));
+			$o->addAttribute('value', $updatedContact->code_client);
+		}
+
+		if(!empty($updatedContact->code_fournisseur)) {
+			$o = $xmlContactsEntry->addChild('userDefinedField', null, 'http://schemas.google.com/contact/2008');
+			$o->addAttribute('key', $langs->trans('SupplierCode'));
+			$o->addAttribute('value', $updatedContact->code_fournisseur);
+		}
+	}
 
         $updatedXML = $xmlContactsEntry->asXML();
      	//pre(htmlentities($updatedXML),true);
