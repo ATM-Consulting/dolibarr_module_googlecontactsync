@@ -36,6 +36,7 @@ class TGCSToken extends TObjetStd {
 			$object = new \Societe($db);
 				
 			$object->fetch($this->fk_object);
+			$object->dolibarrUrl = dol_buildpath('societe/soc.php?socid='.$this->fk_object, 2);
 			if(empty($object->name)) $object->name = $object->nom;
 
 			if($object->client) {
@@ -62,6 +63,7 @@ class TGCSToken extends TObjetStd {
 			$object->phone = $object->phone_pro;
 			$object->fetch_thirdparty();
 			$object->organization = $object->thirdparty->name;
+			$object->dolibarrUrl = dol_buildpath('contact/card.php?id='.$this->fk_object, 2);
 			
 			$TCategContact = $categObject->containing($this->fk_object, 'contact');
 			if(is_array($TCategContact)) $TCateg = $TCategContact;
@@ -126,9 +128,8 @@ class TGCSToken extends TObjetStd {
 		$contact->email = $object->email;
 
 		$contact->website = array(
-			'href' => 'http://www.example.com/'
+			'href' => $object->dolibarrUrl
 			,'label' => 'URL Dolibarr'
-			,'rel' => 'other'
 		);
 
 		if($object->address || $object->zip || $object->town) {
