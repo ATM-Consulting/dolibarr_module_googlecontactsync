@@ -1,7 +1,6 @@
 <?php
 	use rapidweb\googlecontacts\factories\ContactFactory;
-
-	require '../config.php';
+	require_once '../config.php';
 	dol_include_once('/googlecontactsync/class/gcs.class.php');
 	dol_include_once('/googlecontactsync/lib/googlecontactsync.lib.php');
 
@@ -30,7 +29,12 @@ switch ($put) {
 		__out(_setGroup(GETPOST('name')),'json');
 		
 		break;
-	
+	case 'deleteAllGroups':
+		require_once __DIR__.'/../php-google-contacts-v3-api/vendor/autoload.php';
+		rapidweb\googlecontacts\factories\ContactFactory::deleteAllGroups('https://www.google.com/m8/feeds/groups/'.urlencode($user->email).'/full');
+		
+
+		break;	
 }
 
 switch($get) {
@@ -53,15 +57,9 @@ function _setGroup($name) {
 
 function _sync() {
 	global $user,$fk_user_gcs;
-	
 	$PDOdb=new \TPDOdb;
-	
 	$TToken = \TGCSToken::getTokenToSync($PDOdb,$user->id);
-/*
-	echo '<pre>';
-		var_dump($TToken);	
-	echo '</pre>';
-*/
+
 	$TSync=array();
 	foreach($TToken as &$token) {
 		$res = $token->sync($PDOdb);
@@ -72,12 +70,10 @@ function _sync() {
 			$token->save($PDOdb);
 		}
 		else{*/
-			// $token->save($PDOdb);
+			$token->save($PDOdb);
 			$TSync[] = $token;
 		//}
 	}
-	
-	
 	
 	return $TSync;
 }
@@ -94,8 +90,6 @@ function _optimizedSync() {
 	$TSync = array();
 
 	$apiBaseURL = 'https://www.google.com/m8/feeds/contacts/'.urlencode($user->email).'/thin';
-
-	// echo $apiBaseURL;
 
 	$contacts = rapidweb\googlecontacts\factories\ContactFactory::getAll();
 

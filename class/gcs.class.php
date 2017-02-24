@@ -21,10 +21,13 @@ class TGCSToken extends TObjetStd {
 	}
 
 	public function getObject() {
-		
 		global $conf,$db,$user,$langs;
 		
 		$object = false;
+
+		$TCateg = array();
+		dol_include_once('/categories/class/categorie.class.php');
+		$categObject = new \Categorie($db);
 
 		if($this->type_object == 'company' || $this->type_object == 'societe') {
 				
@@ -34,9 +37,19 @@ class TGCSToken extends TObjetStd {
 				
 			$object->fetch($this->fk_object);
 			if(empty($object->name)) $object->name = $object->nom;
+
+			if($object->client) {
+				$TCategClient = $categObject->containing($this->fk_object, 'customer');
+				if(is_array($TCategClient)) $TCateg = $TCategClient;
+			}
+
+			if($object->fournisseur) {
+				$TCategFourn = $categObject->containing($this->fk_object, 'supplier');
+				if(is_array($TCategFourn)) $TCateg = array_merge($TCateg, $TCategFourn);
+			}
+
 		}
 		
-
 		else if($this->type_object == 'contact') {
 				
 			dol_include_once('/contact/class/contact.class.php');
@@ -50,22 +63,35 @@ class TGCSToken extends TObjetStd {
 			$object->fetch_thirdparty();
 			$object->organization = $object->thirdparty->name;
 			
+			$TCategContact = $categObject->containing($this->fk_object, 'contact');
+			if(is_array($TCategContact)) $TCateg = $TCategContact;
 		}
 		
 		
 		if(is_object($object)) {
+
+			$object->categories = array();
+			foreach($TCateg as $categ) {
+				$ways = $categ->print_all_ways();
+				$fullLabel = '';
+				foreach($ways as $way) {
+					$fullLabel .= strip_tags($way);
+				}
+				$object->categories[] = $fullLabel;
+			}
+
 			foreach($object as $k=>&$v) {
 				if(is_null($v)) $v = '';
 			}
 				
 		}
-//var_dump($object);
+//var_dump($object); exit;
 		return $object;
 	}
 
 	public function sync(&$PDOdb) {
 		global $conf;
-		
+
 		$object = $this->getObject();	
 		if(empty($object)) return false;
 		require_once __DIR__.'/../php-google-contacts-v3-api/vendor/autoload.php';
@@ -117,12 +143,20 @@ class TGCSToken extends TObjetStd {
 			$contact->organization = $object->organization ;
 			$contact->organization_title = self::normalize($object->poste);
 		}
-		
+
+
+		$contact->groupMembershipInfo = array();
+
 		if(!empty($conf->global->GCS_GOOGLE_GROUP_NAME)) {
-			
 			$group = self::setGroup($PDOdb, $this->fk_user,$conf->global->GCS_GOOGLE_GROUP_NAME);
-			
-			$contact->groupMembershipInfo = $group->id; 
+			array_push($contact->groupMembershipInfo, $group->id->__toString()); 
+		}
+
+		if(!empty($object->categories)) {
+			foreach($object->categories as $categ) {
+				$group = self::setGroup($PDOdb, $this->fk_user, $categ);
+				array_push($contact->groupMembershipInfo, $group->id->__toString()); 
+			}
 		}
 
 		$contactAfterUpdate = rapidweb\googlecontacts\factories\ContactFactory::submitUpdates($contact);
@@ -298,14 +332,17 @@ class TGCSToken extends TObjetStd {
 		
 		if(empty($TCacheGroupSync[$fk_user]) || isset($_REQUEST['force'])) {
 			$TCacheGroupSync[$fk_user]=array();
-			$TGroup = rapidweb\googlecontacts\factories\ContactFactory::getAllByURL('https://www.google.com/m8/feeds/groups/'.urlencode($user->email).'/full');
+
+			$url = 'https://www.google.com/m8/feeds/groups/'.urlencode($user->email).'/full?max-results=100';
+			$TGroup = rapidweb\googlecontacts\factories\ContactFactory::getAllByURL($url);
+
 			foreach($TGroup as $g) {
 				
-				$TCacheGroupSync[$fk_user][(string) $g->title] =(string) basename($g->id);
+				$TCacheGroupSync[$fk_user][htmlspecialchars((string) $g->title)] =(string) basename($g->id);
 				
 			}
 		}
-		
+
 		if(isset($TCacheGroupSync[$fk_user][$name])) {
 			$group = rapidweb\googlecontacts\factories\ContactFactory::getAllByURL('https://www.google.com/m8/feeds/groups/'.urlencode($user->email).'/full/'.$TCacheGroupSync[$fk_user][$name],true);
 			return $group;
@@ -344,7 +381,6 @@ class TGCSToken extends TObjetStd {
 			
 			$xmlToSend = $doc->saveXML();
 		
-		
 			$client = rapidweb\googlecontacts\helpers\GoogleHelper::getClient();
 			
 			$req = new \Google_Http_Request('https://www.google.com/m8/feeds/groups/'.$user->email.'/full');
@@ -355,10 +391,10 @@ class TGCSToken extends TObjetStd {
 			$val = $client->getAuth()->authenticatedRequest($req);
 			
 			$response = simplexml_load_string( $val->getResponseBody() );
-				
+
 			if(!empty($response->id)) {
 				
-				$TCacheGroupSync[$fk_user][(string) $response->title] =(string) basename($response->id);
+				$TCacheGroupSync[$fk_user][htmlspecialchars((string) $response->title)] =(string) basename($response->id);
 				return self::setGroup($PDOdb, $fk_user, $name);
 			}
 			
