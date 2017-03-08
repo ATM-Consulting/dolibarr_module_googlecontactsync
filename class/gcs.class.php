@@ -40,12 +40,12 @@ class TGCSToken extends TObjetStd {
 
 			if(empty($object->name)) $object->name = $object->nom;
 
-			if($object->client) {
+			if(! empty($object->client)) {
 				$TCategClient = $categObject->containing($this->fk_object, 'customer');
 				if(is_array($TCategClient)) $TCateg = $TCategClient;
 			}
 
-			if($object->fournisseur) {
+			if(!empty ($object->fournisseur)) {
 				$TCategFourn = $categObject->containing($this->fk_object, 'supplier');
 				if(is_array($TCategFourn)) $TCateg = array_merge($TCateg, $TCategFourn);
 			}
