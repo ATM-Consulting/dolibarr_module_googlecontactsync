@@ -21,10 +21,13 @@ class TGCSToken extends TObjetStd {
 	}
 
 	public function getObject() {
-		
 		global $conf,$db,$user,$langs;
 		
 		$object = false;
+
+		$TCateg = array();
+		dol_include_once('/categories/class/categorie.class.php');
+		$categObject = new \Categorie($db);
 
 		if($this->type_object == 'company' || $this->type_object == 'societe') {
 				
@@ -33,10 +36,22 @@ class TGCSToken extends TObjetStd {
 			$object = new \Societe($db);
 				
 			$object->fetch($this->fk_object);
+			$object->dolibarrUrl = dol_buildpath('societe/soc.php?socid='.$this->fk_object, 2);
+
 			if(empty($object->name)) $object->name = $object->nom;
+
+			if(! empty($object->client)) {
+				$TCategClient = $categObject->containing($this->fk_object, 'customer');
+				if(is_array($TCategClient)) $TCateg = $TCategClient;
+			}
+
+			if(!empty ($object->fournisseur)) {
+				$TCategFourn = $categObject->containing($this->fk_object, 'supplier');
+				if(is_array($TCategFourn)) $TCateg = array_merge($TCateg, $TCategFourn);
+			}
+
 		}
 		
-
 		else if($this->type_object == 'contact') {
 				
 			dol_include_once('/contact/class/contact.class.php');
@@ -49,25 +64,39 @@ class TGCSToken extends TObjetStd {
 			$object->phone = $object->phone_pro;
 			$object->fetch_thirdparty();
 			$object->organization = $object->thirdparty->name;
+			$object->dolibarrUrl = dol_buildpath('contact/card.php?id='.$this->fk_object, 2);
 			
+			$TCategContact = $categObject->containing($this->fk_object, 'contact');
+			if(is_array($TCategContact)) $TCateg = $TCategContact;
 		}
 		
 		
 		if(is_object($object)) {
+
+			$object->categories = array();
+			foreach($TCateg as $categ) {
+				$ways = $categ->print_all_ways();
+				$fullLabel = '';
+				foreach($ways as $way) {
+					$fullLabel .= strip_tags($way);
+				}
+				$object->categories[] = $fullLabel;
+			}
+
 			foreach($object as $k=>&$v) {
 				if(is_null($v)) $v = '';
 			}
 				
 		}
-//var_dump($object);
+//var_dump($object); exit;
 		return $object;
 	}
 
 	public function sync(&$PDOdb) {
 		global $conf;
-		
+
 		$object = $this->getObject();	
-		
+//var_dump($object);
 		if(empty($object)) return false;
 		require_once __DIR__.'/../php-google-contacts-v3-api/vendor/autoload.php';
 		
@@ -99,7 +128,12 @@ class TGCSToken extends TObjetStd {
 		$contact->phoneNumbers = $TPhone;
 		
 		$contact->email = $object->email;
-		
+
+		$contact->website = $object->dolibarrUrl;
+
+		if(! empty($object->code_client)) $contact->code_client = $object->code_client;
+		if(! empty($object->code_fournisseur)) $contact->code_fournisseur = $object->code_fournisseur;
+
 		if($object->address || $object->zip || $object->town) {
 			$contact->postalAddress = trim($object->address);
 			if($object->zip || $object->town) {
@@ -107,19 +141,97 @@ class TGCSToken extends TObjetStd {
 				$contact->postalAddress.=trim($object->zip.' '.$object->town);
 			}
 		}
+
 		if(!empty($object->organization)) {
 			$contact->organization = $object->organization ;
 			$contact->organization_title = self::normalize($object->poste);
 		}
+
+
+		$contact->groupMembershipInfo = array();
+
+		if(!empty($conf->global->GCS_GOOGLE_GROUP_NAME)) {
+			$group = self::setGroup($PDOdb, $this->fk_user,$conf->global->GCS_GOOGLE_GROUP_NAME);
+			array_push($contact->groupMembershipInfo, $group->id->__toString()); 
+		}
+
+		if(!empty($object->categories)) {
+			foreach($object->categories as $categ) {
+				$group = self::setGroup($PDOdb, $this->fk_user, $categ);
+				array_push($contact->groupMembershipInfo, $group->id->__toString()); 
+			}
+		}
+
+		$contactAfterUpdate = rapidweb\googlecontacts\factories\ContactFactory::submitUpdates($contact);
+
+		if(!empty($contactAfterUpdate->id)) return $contactAfterUpdate;
+		else return false;
+	}
+
+	public function optimizedSync(&$PDOdb) {
+		global $conf;
 		
+		$object = $this->getObject();	
+		
+		if(empty($object)) return false;
+		require_once __DIR__.'/../php-google-contacts-v3-api/vendor/autoload.php';
+		
+		$_SESSION['GCS_fk_user'] = $this->fk_user; // TODO i'm shiting in the rain ! AA 
+		
+		$TPhone = array();
+		if(!empty($object->phone)) $TPhone['work'] =$object->phone;
+		if(!empty($object->phone_perso)) $TPhone['perso'] =$object->phone_perso; 
+		if(!empty($object->phone_mobile)) $TPhone['mobile'] =$object->phone_mobile;
+		if(!empty($object->fax)) $TPhone['fax'] =$object->fax;
+		
+		$object->phone = self::normalize($TPhone['work']);
+		$object->email = self::normalize($object->email);
+/*
+		if($this->token) {
+			$contact = rapidweb\googlecontacts\factories\ContactFactory::getBySelfURL($this->token);	
+//		var_dump($contact,$this);exit;
+		}
+*/			
+		if(empty($this->contact)) {
+			$this->contact = rapidweb\googlecontacts\factories\ContactFactory::create($object->name,$object->phone, $object->email);
+			$this->token = $this->contact->selfURL;
+			$this->save($PDOdb);
+		}
+
+		$this->contact->name = $object->name;
+		
+		$this->contact->phoneNumber = $object->phone;
+		
+		$this->contact->phoneNumbers = $TPhone;
+		
+		$this->contact->email = $object->email;
+		
+		if($object->address || $object->zip || $object->town) {
+			$this->contact->postalAddress = trim($object->address);
+			if($object->zip || $object->town) {
+				if(!empty($this->contact->postalAddress))$this->contact->postalAddress.=', ';	
+				$this->contact->postalAddress.=trim($object->zip.' '.$object->town);
+			}
+		}
+		if(!empty($object->organization)) {
+			$this->contact->organization = $object->organization ;
+			$this->contact->organization_title = self::normalize($object->poste);
+		}
+
+/*	
 		if(!empty($conf->global->GCS_GOOGLE_GROUP_NAME)) {
 			
 			$group = self::setGroup($PDOdb, $this->fk_user,$conf->global->GCS_GOOGLE_GROUP_NAME);
 			
 			$contact->groupMembershipInfo = $group->id; 
 		}
-		
-		$contactAfterUpdate = rapidweb\googlecontacts\factories\ContactFactory::submitUpdates($contact);
+
+		echo '<pre>';
+		var_dump($this->contact);
+		echo '</pre>';
+*/
+
+		$contactAfterUpdate = rapidweb\googlecontacts\factories\ContactFactory::submitUpdates($this->contact);
 		
 		if(!empty($contactAfterUpdate->id)) return $contactAfterUpdate;
 		else return false;
@@ -161,7 +273,6 @@ class TGCSToken extends TObjetStd {
 			$t->load($PDOdb, $row->rowid);
 			
 			$TToken[] = $t;
-			
 		}
 		
 		
@@ -224,14 +335,17 @@ class TGCSToken extends TObjetStd {
 		
 		if(empty($TCacheGroupSync[$fk_user]) || isset($_REQUEST['force'])) {
 			$TCacheGroupSync[$fk_user]=array();
-			$TGroup = rapidweb\googlecontacts\factories\ContactFactory::getAllByURL('https://www.google.com/m8/feeds/groups/'.urlencode($user->email).'/full');
+
+			$url = 'https://www.google.com/m8/feeds/groups/'.urlencode($user->email).'/full?max-results=100';
+			$TGroup = rapidweb\googlecontacts\factories\ContactFactory::getAllByURL($url);
+
 			foreach($TGroup as $g) {
 				
-				$TCacheGroupSync[$fk_user][(string) $g->title] =(string) basename($g->id);
+				$TCacheGroupSync[$fk_user][htmlspecialchars((string) $g->title)] =(string) basename($g->id);
 				
 			}
 		}
-		
+
 		if(isset($TCacheGroupSync[$fk_user][$name])) {
 			$group = rapidweb\googlecontacts\factories\ContactFactory::getAllByURL('https://www.google.com/m8/feeds/groups/'.urlencode($user->email).'/full/'.$TCacheGroupSync[$fk_user][$name],true);
 			return $group;
@@ -270,7 +384,6 @@ class TGCSToken extends TObjetStd {
 			
 			$xmlToSend = $doc->saveXML();
 		
-		
 			$client = rapidweb\googlecontacts\helpers\GoogleHelper::getClient();
 			
 			$req = new \Google_Http_Request('https://www.google.com/m8/feeds/groups/'.$user->email.'/full');
@@ -281,10 +394,10 @@ class TGCSToken extends TObjetStd {
 			$val = $client->getAuth()->authenticatedRequest($req);
 			
 			$response = simplexml_load_string( $val->getResponseBody() );
-				
+
 			if(!empty($response->id)) {
 				
-				$TCacheGroupSync[$fk_user][(string) $response->title] =(string) basename($response->id);
+				$TCacheGroupSync[$fk_user][htmlspecialchars((string) $response->title)] =(string) basename($response->id);
 				return self::setGroup($PDOdb, $fk_user, $name);
 			}
 			

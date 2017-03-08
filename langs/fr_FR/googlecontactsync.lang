@@ -31,3 +31,5 @@ TestToken=Tester la connexion avec votre carnet d'adresse
 
 TokenSeemsKO=L'interrogation de votre carnet ne retourne aucun résultat (peut-être est-il vide ?)
 TokenSeemsOK=L'interrogation de votre carnet retourne des résultats
+
+DolibarrURL=URL Dolibarr
