@@ -123,8 +123,6 @@ class TGCSToken extends TObjetStd {
 		
 		$contact->name = $object->name;
 		
-		$contact->phoneNumber = $object->phone;
-		
 		$contact->phoneNumbers = $TPhone;
 		
 		$contact->email = $object->email;

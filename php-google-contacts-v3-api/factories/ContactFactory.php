@@ -198,29 +198,20 @@ abstract class ContactFactory
         $contactGDNodes = $xmlContactsEntry->children('http://schemas.google.com/g/2005');
 	$contactGContactNodes = $xmlContactsEntry->children('http://schemas.google.com/contact/2008');
 
-        foreach ($contactGDNodes as $key => $value) {
-            $attributes = $value->attributes();
-			
-            if(isset($updatedContact->$key) && $updatedContact->$key == '') {
-            	unset($xmlContactsEntry->$key); continue;
-            }
-            
-            if ($key == 'email') {
-                $attributes['address'] = $updatedContact->email;
-            } elseif($key!='phoneNumber' && !is_array($updatedContact->$key)) {
-            	
-                $xmlContactsEntry->$key = $updatedContact->$key;
-                $attributes['uri'] = '';
-            }
-        }
-     
+
+	// Edition des noeuds du namespace XML gd
+
+	unset($contactGDNodes->name);
+	if(! empty($updatedContact->name)) {
+        	$o = $xmlContactsEntry->addChild('name', null, 'http://schemas.google.com/g/2005');
+		$o->addChild('fullName', $updatedContact->name, 'http://schemas.google.com/g/2005');
+	}
+
+       	unset($contactGDNodes->email);
         if(!empty($updatedContact->email)) {
-        	unset($contactGDNodes->email);
-        	 
         	$o = $xmlContactsEntry->addChild('email',null,'http://schemas.google.com/g/2005');
         	$o->addAttribute('address',$updatedContact->email);
         	$o->addAttribute('rel',"http://schemas.google.com/g/2005#work");
-        
         }
 	
      	unset($contactGDNodes->phoneNumber);
@@ -237,15 +228,14 @@ abstract class ContactFactory
         	 
         }
 
+       	unset($contactGDNodes->structuredPostalAddress);
         if(!empty($updatedContact->postalAddress)) {
-        	unset($contactGDNodes->structuredPostalAddress);
-        	
-        	$o = $xmlContactsEntry->addChild('structuredPostalAddress',$updatedContact->postalAddress,'http://schemas.google.com/g/2005');
+        	$o = $xmlContactsEntry->addChild('structuredPostalAddress', null,'http://schemas.google.com/g/2005');
         	$o->addAttribute('rel', 'http://schemas.google.com/g/2005#work');
         	$o->addAttribute('primary', 'true');
 		$o->addChild('formattedAddress', $updatedContact->postalAddress, 'http://schemas.google.com/g/2005');
         }
-        
+
         /*
          * <gd:structuredPostalAddress mailClass='http://schemas.google.com/g/2005#letters' label='John at Google'>
   <gd:street>1600 Amphitheatre Parkway</gd:street>
@@ -257,6 +247,22 @@ gd:country?
          * 
          */
 
+	unset($contactGDNodes->organization);
+	if(! empty($updatedContact->organization) || ! empty($updatedContact->organization_title)) {
+        	$o = $xmlContactsEntry->addChild('organization', null, 'http://schemas.google.com/g/2005');
+		$o->addAttribute('rel', 'http://schemas.google.com/g/2005#work');
+
+		if(! empty($updatedContact->organization)) {
+			$o->addChild('orgName', $updatedContact->organization, 'http://schemas.google.com/g/2005');
+		}
+
+		if(! empty($updatedContact->organization_title)) {
+			$o->addChild('orgTitle', $updatedContact->organization_title, 'http://schemas.google.com/g/2005');
+		}
+	}
+
+	// Edition des noeuds du namespace XML gContact
+
         unset($contactGContactNodes->website);
 	if (! empty($updatedContact->website))
 	{
@@ -264,17 +270,7 @@ gd:country?
 		$o->addAttribute('href', $updatedContact->website);
 		$o->addAttribute('label', $langs->trans('DolibarrURL'));
 	}
-
-        unset($contactGDNodes->organization);
-        if(!empty($updatedContact->organization)) {
-        	$o = $xmlContactsEntry->addChild('organization',null,'http://schemas.google.com/g/2005');
-        	$o->addAttribute('rel', 'http://schemas.google.com/g/2005#work');
-        	$o->addChild('orgName',$updatedContact->organization, 'http://schemas.google.com/g/2005');
-        	if(!empty($updatedContact->organization_title)) $o->addChild('orgTitle',$updatedContact->organization_title, 'http://schemas.google.com/g/2005');
-        }
         
-        $contactGCNodes = $xmlContactsEntry->children('http://schemas.google.com/g/2005#kind');
-
        	unset($contactGContactNodes->groupMembershipInfo);
         if(!empty($updatedContact->groupMembershipInfo)) {
         	foreach($updatedContact->groupMembershipInfo as $group) {
@@ -284,8 +280,8 @@ gd:country?
 		}
         }
 
+	unset($contactGContactNodes->userDefinedField);
 	if(!empty($updatedContact->code_client) || !empty($updatedContact->code_fournisseur)) {
-		unset($contactGContactNodes->userDefinedField);
 
 		if(!empty($updatedContact->code_client)) {
 			$o = $xmlContactsEntry->addChild('userDefinedField', null, 'http://schemas.google.com/contact/2008');
