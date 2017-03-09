@@ -1,6 +1,8 @@
 <?php
 	require '../config.php';
 
+	if(empty($conf->googlecontactsync->enabled)) exit;
+	
 ?>
 $(document).ready(function() {
 
