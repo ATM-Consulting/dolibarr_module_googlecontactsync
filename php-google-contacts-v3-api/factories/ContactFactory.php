@@ -83,7 +83,7 @@ abstract class ContactFactory
 	//var_dump($val);   
 
     	$response = $val->getResponseBody();
-    	//pre(htmlentities($response),true); 
+    	//pre(htmlentities($response), true); 
     	$xml =  simplexml_load_string($response);
     	if($full) return $xml;
     	//echo pre($xml,true);
@@ -175,19 +175,19 @@ abstract class ContactFactory
 	$langs->load('googlecontactsync@googlecontactsync');
 
         $client = GoogleHelper::getClient();
-// var_dump($updatedContact);
-//exit($updatedContact->selfURL);
+
         $req = new \Google_Http_Request($updatedContact->selfURL);
         $req->setRequestHeaders(array(
 		'GData-Version' => '3.0'
 	));
 
-
         $val = $client->getAuth()->authenticatedRequest($req);
 
         $response = $val->getResponseBody();
         //pre(htmlentities($response), true);
+
         $xmlContact = simplexml_load_string($response);
+
         $xmlContact->registerXPathNamespace('gd', 'http://schemas.google.com/g/2005');
         $xmlContact->registerXPathNamespace('gContact', 'http://schemas.google.com/contact/2008');
         
@@ -275,11 +275,11 @@ gd:country?
         
         $contactGCNodes = $xmlContactsEntry->children('http://schemas.google.com/g/2005#kind');
 
+       	unset($contactGContactNodes->groupMembershipInfo);
         if(!empty($updatedContact->groupMembershipInfo)) {
-        	unset($contactGDNodes->groupMembershipInfo);
         	foreach($updatedContact->groupMembershipInfo as $group) {
 			$o = $xmlContactsEntry->addChild('groupMembershipInfo',null,'http://schemas.google.com/contact/2008');
-        		$o->addAttribute('delete', 'false');
+        		$o->addAttribute('deleted', 'false');
         		$o->addAttribute('href', $group);
 		}
         }
@@ -300,19 +300,23 @@ gd:country?
 		}
 	}
 
+	unset($xmlContactsEntry->updated);
+	$xmlContactsEntry->addChild('updated', date('c'));
+
         $updatedXML = $xmlContactsEntry->asXML();
      	//pre(htmlentities($updatedXML),true);
-        $req = new \Google_Http_Request($updatedContact->editURL);
+        $req = new \Google_Http_Request('https://www.google.com/m8/feeds/contacts/default/full/'.basename($updatedContact->id));
         $req->setRequestHeaders(array(
-		'Content-Type' => 'application/atom+xml; charset=UTF-8; type=feed'
+		'Content-Type' => 'application/atom+xml; charset=UTF-8; type=entry'
 		,'GData-Version' => '3.0'
+		,'If-Match' => '*'
 	));
         $req->setRequestMethod('PUT');
         $req->setPostBody($updatedXML);
 
 
         $val = $client->getAuth()->authenticatedRequest($req);
-	
+
         $response = $val->getResponseBody();
       	//pre(htmlentities($response),true); exit;
         $xmlContact = simplexml_load_string($response);

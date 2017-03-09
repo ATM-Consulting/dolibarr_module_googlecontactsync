@@ -93,7 +93,7 @@ class TGCSToken extends TObjetStd {
 	}
 
 	public function sync(&$PDOdb) {
-		global $conf;
+		global $conf, $user;
 
 		$object = $this->getObject();	
 //var_dump($object);
@@ -148,17 +148,19 @@ class TGCSToken extends TObjetStd {
 		}
 
 
-		$contact->groupMembershipInfo = array();
+		$contact->groupMembershipInfo = array(
+			0 => 'http://www.google.com/m8/feeds/groups/'.urlencode($user->email).'/base/6' // Groupe 6 = liste globale des contacts
+		);
 
 		if(!empty($conf->global->GCS_GOOGLE_GROUP_NAME)) {
 			$group = self::setGroup($PDOdb, $this->fk_user,$conf->global->GCS_GOOGLE_GROUP_NAME);
-			array_push($contact->groupMembershipInfo, $group->id->__toString()); 
+			if(! empty($group->id)) array_push($contact->groupMembershipInfo, $group->id->__toString()); 
 		}
 
 		if(!empty($object->categories)) {
 			foreach($object->categories as $categ) {
 				$group = self::setGroup($PDOdb, $this->fk_user, $categ);
-				array_push($contact->groupMembershipInfo, $group->id->__toString()); 
+				if(! empty($group->id)) array_push($contact->groupMembershipInfo, $group->id->__toString()); 
 			}
 		}
 
@@ -333,6 +335,8 @@ class TGCSToken extends TObjetStd {
 		$user = new User($db);
 		$user->fetch($fk_user);
 		
+		// Création d'un cache global des groupes s'il n'existe pas
+
 		if(empty($TCacheGroupSync[$fk_user]) || isset($_REQUEST['force'])) {
 			$TCacheGroupSync[$fk_user]=array();
 
@@ -345,64 +349,69 @@ class TGCSToken extends TObjetStd {
 				
 			}
 		}
+	
+		// Si le groupe est dans le cache, on le récupère
 
 		if(isset($TCacheGroupSync[$fk_user][$name])) {
-			$group = rapidweb\googlecontacts\factories\ContactFactory::getAllByURL('https://www.google.com/m8/feeds/groups/'.urlencode($user->email).'/full/'.$TCacheGroupSync[$fk_user][$name],true);
-			return $group;
-		}
-		else{
-		
-			$doc = new \DOMDocument();
-			$doc->formatOutput = true;
-			$entry = $doc->createElement('atom:entry');
-			$entry->setAttribute('xmlns:atom', 'http://www.w3.org/2005/Atom');
-			$entry->setAttribute('xmlns:gd', 'http://schemas.google.com/g/2005');
-			$entry->setAttribute('xmlns:gContact', 'http://schemas.google.com/contact/2008');
-			$doc->appendChild($entry);
-			
-			$o = $doc->createElement('atom:title', $name);
-			$o->setAttribute('type', 'text');
-			$entry->appendChild($o);
-			
-			$o = $doc->createElement('atom:content', $name);
-			$o->setAttribute('type', 'text');
-			
-			$entry->appendChild($o);
-			
-			$o = $doc->createElement('gd:extendedProperty');
-			$o->setAttribute('name', 'more info about the group');
-			
-			$entry->appendChild($o);
-			
-			$o2 = $doc->createElement('info','created by Dolibarr Module GCS');
-			$o->appendChild($o2);
-			
-			$o = $doc->createElement('atom:category');
-			$o->setAttribute('scheme', 'http://schemas.google.com/g/2005#kind');
-			$o->setAttribute('term', 'http://schemas.google.com/contact/2008#group');
-			$entry->appendChild($o);
-			
-			$xmlToSend = $doc->saveXML();
-		
-			$client = rapidweb\googlecontacts\helpers\GoogleHelper::getClient();
-			
-			$req = new \Google_Http_Request('https://www.google.com/m8/feeds/groups/'.$user->email.'/full');
-			$req->setRequestHeaders(array('content-type' => 'application/atom+xml; charset=UTF-8; type=feed'));
-			$req->setRequestMethod('POST');
-			$req->setPostBody($xmlToSend);
-			
-			$val = $client->getAuth()->authenticatedRequest($req);
-			
-			$response = simplexml_load_string( $val->getResponseBody() );
+			$reqURL = 'https://www.google.com/m8/feeds/groups/'.urlencode($user->email).'/full/'.$TCacheGroupSync[$fk_user][$name];
+			$group = rapidweb\googlecontacts\factories\ContactFactory::getAllByURL($reqURL, true);
 
-			if(!empty($response->id)) {
-				
-				$TCacheGroupSync[$fk_user][htmlspecialchars((string) $response->title)] =(string) basename($response->id);
-				return self::setGroup($PDOdb, $fk_user, $name);
-			}
-			
+			if(! empty($group->id)) return $group;
+
 			return false;
+		}
+
+		// Sinon, création d'un nouveau groupe
+		
+		$doc = new \DOMDocument();
+		$doc->formatOutput = true;
+		$entry = $doc->createElement('atom:entry');
+		$entry->setAttribute('xmlns:atom', 'http://www.w3.org/2005/Atom');
+		$entry->setAttribute('xmlns:gd', 'http://schemas.google.com/g/2005');
+		$entry->setAttribute('xmlns:gContact', 'http://schemas.google.com/contact/2008');
+		$doc->appendChild($entry);
+
+		$o = $doc->createElement('atom:title', $name);
+		$o->setAttribute('type', 'text');
+		$entry->appendChild($o);
 			
+		$o = $doc->createElement('atom:content', $name);
+		$o->setAttribute('type', 'text');
+			
+		$entry->appendChild($o);
+			
+		$o = $doc->createElement('gd:extendedProperty');
+		$o->setAttribute('name', 'more info about the group');
+			
+		$entry->appendChild($o);
+			
+		$o2 = $doc->createElement('info','created by Dolibarr Module GCS');
+		$o->appendChild($o2);
+			
+		$o = $doc->createElement('atom:category');
+		$o->setAttribute('scheme', 'http://schemas.google.com/g/2005#kind');
+		$o->setAttribute('term', 'http://schemas.google.com/contact/2008#group');
+		$entry->appendChild($o);
+			
+		$xmlToSend = $doc->saveXML();
+		
+		$client = rapidweb\googlecontacts\helpers\GoogleHelper::getClient();
+			
+		$req = new \Google_Http_Request('https://www.google.com/m8/feeds/groups/'.$user->email.'/full');
+		$req->setRequestHeaders(array('content-type' => 'application/atom+xml; charset=UTF-8; type=feed'));
+		$req->setRequestMethod('POST');
+		$req->setPostBody($xmlToSend);
+
+		$val = $client->getAuth()->authenticatedRequest($req);
+			
+		$response = simplexml_load_string( $val->getResponseBody() );
+
+		if(!empty($response->id)) {
+
+			// MàJ cache
+
+			$TCacheGroupSync[$fk_user][htmlspecialchars((string) $response->title)] =(string) basename($response->id);
+			return $response;
 		}
 		
 		return false;	
