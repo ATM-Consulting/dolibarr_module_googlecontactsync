@@ -34,6 +34,9 @@ $token->token = $accessToken->access_token;
 $token->refresh_token = $accessToken->refresh_token;
 $token->type_object='user';
 $token->fk_object = $fk_user;
+$PDOdb->debug = true;
 $token->save($PDOdb);
+//exit;
 
-header('location:'.dol_buildpath('/user/card.php',1).'?id='.$fk_user);
+$user_card_url = (DOL_VERSION < 3.6) ? '/user/fiche.php' : '/user/card.php';
+header('location:'.dol_buildpath($user_card_url,1).'?id='.$fk_user);

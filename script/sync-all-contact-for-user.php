@@ -18,12 +18,7 @@
 	$PDOdb=new TPDOdb;
 
 	$Tab = $PDOdb->ExecuteAsArray("SELECT rowid FROM ".MAIN_DB_PREFIX."socpeople 
-		WHERE 
-		tms >='".date('Y-m-d', strtotime('-4month') )."'"/*."'
-	
-		AND rowid NOT IN ( 
-			SELECT fk_object FROM ".MAIN_DB_PREFIX."gcs_token WHERE type_object='contact' AND token!='' AND token IS NOT NULL AND fk_user=".$fk_user."
-		)"*/);
+		WHERE 1 ");
 echo count($Tab);
 //	var_dump($Tab);
 

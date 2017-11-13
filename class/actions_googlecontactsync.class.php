@@ -77,6 +77,8 @@ class Actionsgooglecontactsync
 		  
 		  	global $langs,$conf,$user,$db;
 		  
+			$user_card_url = (DOL_VERSION < 3.6) ? '/user/fiche.php' : '/user/card.php';
+
 		  	if(empty($object->email)) {
 		  		$button = $langs->trans('SetYourEmailToGetToken');
 		  	}
@@ -85,8 +87,8 @@ class Actionsgooglecontactsync
 			}
 			else{
 				$button = '<a href="'.dol_buildpath('/googlecontactsync/php-google-contacts-v3-api/authorise-application.php',2).'?fk_user='.$object->id.'">'.$langs->trans('UserHasToken').'</a>'.img_info('Token : '.$token->token.' - Refresh : '.$token->refresh_token);
-				$button .=' <a href="'.dol_buildpath('/user/card.php',1).'?id='.$object->id.'&action=removeMyToken">'.$langs->trans('Remove').'</a>'.img_info($langs->trans('RemoveToken'));
-				$button .=' <a href="'.dol_buildpath('/user/card.php',1).'?id='.$object->id.'&action=testTokenGoogle">'.$langs->trans('Test').'</a>'.img_info($langs->trans('TestToken'));
+				$button .=' <a href="'.dol_buildpath($user_card_url,1).'?id='.$object->id.'&action=removeMyToken">'.$langs->trans('Remove').'</a>'.img_info($langs->trans('RemoveToken'));
+				$button .=' <a href="'.dol_buildpath($user_card_url,1).'?id='.$object->id.'&action=testTokenGoogle">'.$langs->trans('Test').'</a>'.img_info($langs->trans('TestToken'));
 			}
 		  
 		  
@@ -115,7 +117,6 @@ class Actionsgooglecontactsync
 			dol_include_once('/googlecontactsync/class/gcs.class.php');
 			
 			if($action=='testTokenGoogle') {
-				
 				dol_include_once('/googlecontactsync/lib/googlecontactsync.lib.php');
 				$TContact  = _getAllContact();
 				if(!empty($TContact[0]->id)) {
