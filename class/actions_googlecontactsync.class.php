@@ -185,7 +185,12 @@ class Actionsgooglecontactsync
 					echo '<a class="butAction" href="'.dol_buildpath('/contact/card.php',1).'?id='.$object->id.'&action=syncToPhone">'.$langs->trans('SyncCardToPhone').'</a>';
 				}
 				else if($object->element == 'societe' && !empty($conf->global->GCS_GOOGLE_SYNC_THIRDPARTY)) {
-					echo '<a class="butAction" href="'.dol_buildpath('/societe/soc.php',1).'?socid='.$object->id.'&action=syncToPhone">'.$langs->trans('SyncCardToPhone').'</a>';
+				    if (DOL_VERSION < 6.0) {
+				        echo '<a class="butAction" href="'.dol_buildpath('/societe/soc.php',1).'?socid='.$object->id.'&action=syncToPhone">'.$langs->trans('SyncCardToPhone').'</a>';
+				    } else {
+				        echo '<a class="butAction" href="'.dol_buildpath('/societe/card.php',1).'?socid='.$object->id.'&action=syncToPhone">'.$langs->trans('SyncCardToPhone').'</a>';
+				    }
+					
 				}
 				
 			}
