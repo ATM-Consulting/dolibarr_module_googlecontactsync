@@ -385,6 +385,10 @@ gd:country?
         	
         }
         
+	if(empty($xmlContact)) {
+		return 'php-google-contacts-v3-api/factories/ContactFactory.php L389 Error in $val->getResponseBody()';
+	}
+
         $xmlContact->registerXPathNamespace('gd', 'http://schemas.google.com/g/2005');
 
         $xmlContactsEntry = $xmlContact;
