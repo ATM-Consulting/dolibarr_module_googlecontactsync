@@ -14,7 +14,7 @@
 switch ($put) {
 	case 'sync':
 		
-		__out(_sync(),'json');
+		__out(_sync(GETPOST('nb')),'json');
 			
 		break;
 	
@@ -55,10 +55,11 @@ function _setGroup($name) {
 	
 }
 
-function _sync() {
+function _sync($nb=5) {
 	global $user,$fk_user_gcs;
 	$PDOdb=new \TPDOdb;
-	$TToken = \TGCSToken::getTokenToSync($PDOdb,$user->id);
+	if(empty($nb))$nb = 5;
+	$TToken = \TGCSToken::getTokenToSync($PDOdb,$user->id,$nb);
 
 	$TSync=array();
 	foreach($TToken as &$token) {
