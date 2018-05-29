@@ -188,6 +188,14 @@ print '<td align="right" width="300">';
 print ajax_constantonoff('GCS_GOOGLE_SYNC_CONTACT_ALL_USER');
 print '</td></tr>';
 
+$var=!$var;
+print '<tr '.$bc[$var].'>';
+print '<td>'.$langs->trans("GCS_GOOGLE_SYNC_ALL_CONTACT_FROM_SOCIETE").'</td>';
+print '<td align="center" width="20">&nbsp;</td>';
+print '<td align="right" width="300">';
+print ajax_constantonoff('GCS_GOOGLE_SYNC_ALL_CONTACT_FROM_SOCIETE');
+print '</td></tr>';
+
 print '</table>';
 
 llxFooter();

@@ -305,7 +305,8 @@ class TGCSToken extends TObjetStd {
 	}
 	
 	public static function setSync(&$PDOdb, $fk_object, $type_object, $fk_user) {
-			
+		global $conf;
+		
 		if(empty($fk_object) || empty($type_object) ) return false;
 			
 			$token = new TGCSToken;
@@ -314,7 +315,16 @@ class TGCSToken extends TObjetStd {
 			$token->type_object = $type_object;
 			$token->fk_user = $fk_user;
 			$token->to_sync = 1;
-			$token->save($PDOdb); 
+			$token->save($PDOdb);
+		
+			if ($type_object == 'societe' && !empty($conf->global->GCS_GOOGLE_SYNC_ALL_CONTACT_FROM_SOCIETE))
+			{
+				$TContactId = TRequeteCore::get_id_from_what_you_want($PDOdb, MAIN_DB_PREFIX.'socpeople', array('fk_soc'=>$fk_object,'statut'=>1));
+				foreach ($TContactId as $fk_socpeople)
+				{
+					self::setSync($PDOdb, $fk_socpeople, 'contact', $fk_user);
+				}
+			}
 			
 			global $langs;
 			
