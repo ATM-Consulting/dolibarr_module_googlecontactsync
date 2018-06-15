@@ -117,13 +117,17 @@ class InterfacegoogleContactSynctrigger
         // Data and type of action are stored into $object and $action
         // Users
         if ( (($action == 'COMPANY_CREATE' || $action == 'COMPANY_MODIFY') && !empty($conf->global->GCS_GOOGLE_SYNC_THIRDPARTY)) 
-        	|| (($action == 'CONTACT_MODIFY' || $action == 'CONTACT_CREATE') && !empty($conf->global->GCS_GOOGLE_SYNC_CONTACT)) ) {
+        	|| (($action == 'CONTACT_MODIFY' || $action == 'CONTACT_CREATE') && !empty($conf->global->GCS_GOOGLE_SYNC_CONTACT)) 
+			|| (($action == 'USER_CREATE' || $action == 'USER_MODIFY') && !empty($conf->global->GCS_GOOGLE_SYNC_USER)) 
+		) {
         	
 			define('INC_FROM_DOLIBARR',true);
 			dol_include_once('/googlecontactsync/config.php');
 			dol_include_once('/googlecontactsync/class/gcs.class.php');
 			
 			$PDOdb=new TPDOdb;
+			$element = $object->element;
+			if ($element == 'user') $element = 'user_object';
 			
 			if(!empty($conf->global->GCS_GOOGLE_SYNC_CONTACT_ALL_USER)) {
 				TGCSToken::setSyncAll($PDOdb, $object->id, $object->element);
