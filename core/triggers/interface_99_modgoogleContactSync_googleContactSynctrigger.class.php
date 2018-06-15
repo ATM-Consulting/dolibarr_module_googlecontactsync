@@ -130,7 +130,7 @@ class InterfacegoogleContactSynctrigger
 			if ($element == 'user') $element = 'user_object';
 			
 			if(!empty($conf->global->GCS_GOOGLE_SYNC_CONTACT_ALL_USER)) {
-				TGCSToken::setSyncAll($PDOdb, $object->id, $object->element);
+				TGCSToken::setSyncAll($PDOdb, $object->id, $element);
 			}
 			else{
 				TGCSToken::setSync($PDOdb, $object->id, $object->element, $user->id);
