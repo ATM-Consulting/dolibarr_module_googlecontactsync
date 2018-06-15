@@ -1,10 +1,10 @@
-Module104029Name = googleContactSync
+Module104029Name = Google contact sync
 Module104029Desc = Module de syncronisation des contacts google
 
 ATMAbout = Ce module a été développé par <a href="http://www.atm-consulting.fr" target="_blank">ATM Consulting</a><br>Vous pouvez retrouver la documentation sur notre <a href="http://wiki.atm-consulting.fr/index.php/Accueil" target="_blank">wiki</a><br><br>Pour toute question technique ou retour, contactez-nous sur <a href="mailto:support@atm-consulting.fr">support@atm-consulting.fr</a><br><br>Pour toute question commerciale, contactez-nous sur <a href="mailto:contact@atm-consulting.fr">contact@atm-consulting.fr</a> ou au +33 9 77 19 50 70<br><br>Retrouvez nos autres modules sur <a href="http://www.dolistore.com/search.php?orderby=position&orderway=desc&search_query=atm&submit_search=Rechercher" target="_blank">Dolistore</a>
 
-googleContactSyncSetup = Configuration du module googleContactSync
-googleContactSyncAbout = A propos du module googleContactSync
+googleContactSyncSetup = Configuration du module Google contact sync
+googleContactSyncAbout = A propos du module Google contact sync
 
 GCS_GOOGLE_CLIENT_ID = Google client id (https://console.developers.google.com/apis/credentials)
 GCS_GOOGLE_CLIENT_SECRET = Google client secret
@@ -24,6 +24,7 @@ TokenForUser=Token de synchro Google
 
 GCS_GOOGLE_SYNC_CONTACT=Synchroniser les contacts
 GCS_GOOGLE_SYNC_THIRDPARTY=Synchroniser les tiers
+GCS_GOOGLE_SYNC_USER=Synchroniser les utilisateurs
 GCS_GOOGLE_SYNC_CONTACT_ALL_USER=Synchroniser avec tous les utilisateurs à la création/modification d'une fiche
 
 RemoveToken=Supprimer mon token de connexion

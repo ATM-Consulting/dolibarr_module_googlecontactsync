@@ -49,7 +49,9 @@ $action = GETPOST('action', 'alpha');
 if (preg_match('/set_(.*)/',$action,$reg))
 {
 	$code=$reg[1];
-	if (dolibarr_set_const($db, $code, GETPOST($code), 'chaine', 0, '', 0) > 0)
+	$value=GETPOST($code);
+	if (in_array($code, array('GCS_GOOGLE_CLIENT_ID', 'GCS_GOOGLE_CLIENT_SECRET'))) $value = trim($value);
+	if (dolibarr_set_const($db, $code, $value, 'chaine', 0, '', 0) > 0)
 	{
 		header("Location: ".$_SERVER["PHP_SELF"]);
 		exit;
@@ -178,6 +180,14 @@ print '<td>'.$langs->trans("GCS_GOOGLE_SYNC_CONTACT").'</td>';
 print '<td align="center" width="20">&nbsp;</td>';
 print '<td align="right" width="300">';
 print ajax_constantonoff('GCS_GOOGLE_SYNC_CONTACT');
+print '</td></tr>';
+
+$var=!$var;
+print '<tr '.$bc[$var].'>';
+print '<td>'.$langs->trans("GCS_GOOGLE_SYNC_USER").'</td>';
+print '<td align="center" width="20">&nbsp;</td>';
+print '<td align="right" width="300">';
+print ajax_constantonoff('GCS_GOOGLE_SYNC_USER');
 print '</td></tr>';
 
 $var=!$var;

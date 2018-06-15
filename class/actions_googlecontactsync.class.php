@@ -65,38 +65,38 @@ class Actionsgooglecontactsync
 		if (in_array('usercard', explode(':', $parameters['context']))
 				&& $user->id == $object->id) // action personnelle
 		{
-		  	global $langs;
-			$langs->load('googlecontactsync@googlecontactsync');
-			
-			define('INC_FROM_DOLIBARR',true);
-			dol_include_once('/googlecontactsync/config.php');
-			dol_include_once('/googlecontactsync/class/gcs.class.php');
-				  	
-			$PDOdb=new TPDOdb;
-			$token = TGCSToken::getTokenFor($PDOdb, $object->id, 'user');
-		  
-		  	global $langs,$conf,$user,$db;
-		  
-			$user_card_url = (DOL_VERSION < 3.6) ? '/user/fiche.php' : '/user/card.php';
+				global $langs;
+				$langs->load('googlecontactsync@googlecontactsync');
 
-		  	if(empty($object->email)) {
-		  		$button = $langs->trans('SetYourEmailToGetToken');
-		  	}
-			else if(empty($token)) {
-			    	$button = '<a href="'.dol_buildpath('/googlecontactsync/php-google-contacts-v3-api/authorise-application.php',2).'?fk_user='.$object->id.'">'.$langs->trans('GetYourToken').'</a>';
-			}
-			else{
-				$button = '<a href="'.dol_buildpath('/googlecontactsync/php-google-contacts-v3-api/authorise-application.php',2).'?fk_user='.$object->id.'">'.$langs->trans('UserHasToken').'</a>'.img_info('Token : '.$token->token.' - Refresh : '.$token->refresh_token);
-				$button .=' <a href="'.dol_buildpath($user_card_url,1).'?id='.$object->id.'&action=removeMyToken">'.$langs->trans('Remove').'</a>'.img_info($langs->trans('RemoveToken'));
-				$button .=' <a href="'.dol_buildpath($user_card_url,1).'?id='.$object->id.'&action=testTokenGoogle">'.$langs->trans('Test').'</a>'.img_info($langs->trans('TestToken'));
-			}
-		  
-		  
-		  	echo '
-		  		<tr><td>'.$langs->trans('TokenForUser').'</td><td>'.$button.'</td></tr>
-		  	';
+				define('INC_FROM_DOLIBARR',true);
+				dol_include_once('/googlecontactsync/config.php');
+				dol_include_once('/googlecontactsync/class/gcs.class.php');
+
+				$PDOdb=new TPDOdb;
+				$token = TGCSToken::getTokenFor($PDOdb, $object->id, 'user');
+
+				global $langs,$conf,$user,$db;
+
+				$user_card_url = (DOL_VERSION < 3.6) ? '/user/fiche.php' : '/user/card.php';
+
+				if(empty($object->email)) {
+					$button = $langs->trans('SetYourEmailToGetToken');
+				}
+				else if(empty($token)) {
+						$button = '<a href="'.dol_buildpath('/googlecontactsync/php-google-contacts-v3-api/authorise-application.php',2).'?fk_user='.$object->id.'">'.$langs->trans('GetYourToken').'</a>';
+				}
+				else{
+					$button = '<a href="'.dol_buildpath('/googlecontactsync/php-google-contacts-v3-api/authorise-application.php',2).'?fk_user='.$object->id.'">'.$langs->trans('UserHasToken').'</a>'.img_info('Token : '.$token->token.' - Refresh : '.$token->refresh_token);
+					$button .=' <a href="'.dol_buildpath($user_card_url,1).'?id='.$object->id.'&action=removeMyToken">'.$langs->trans('Remove').'</a>'.img_info($langs->trans('RemoveToken'));
+					$button .=' <a href="'.dol_buildpath($user_card_url,1).'?id='.$object->id.'&action=testTokenGoogle">'.$langs->trans('Test').'</a>'.img_info($langs->trans('TestToken'));
+				}
+
+
+				echo '
+					<tr><td>'.$langs->trans('TokenForUser').'</td><td>'.$button.'</td></tr>
+				';
 		  	
-		  	
+		  
 		  
 		}
 		
@@ -104,9 +104,9 @@ class Actionsgooglecontactsync
 	}
 	
 	function doActions($parameters, &$object, &$action, $hookmanager) {
+		$TContext = explode(':', $parameters['context']);
 		
-		
-		if (in_array('usercard', explode(':', $parameters['context']))
+		if (in_array('usercard', $TContext)
 				&& ($action == 'removeMyToken' || $action=='testTokenGoogle'))
 		{
 			global $langs,$user;
@@ -134,8 +134,9 @@ class Actionsgooglecontactsync
 			}
 			
 		}
-		else if ((in_array('contactcard', explode(':', $parameters['context']))
-				|| in_array('thirdpartycard', explode(':', $parameters['context'])))
+		else if ((in_array('contactcard', $TContext)
+				|| in_array('thirdpartycard', $TContext)
+				|| in_array('usercard', $TContext))
 				&& $action == 'syncToPhone')
 		{
 			global $langs,$user;
@@ -156,7 +157,10 @@ class Actionsgooglecontactsync
 				if(empty($fk_object))$fk_object=GETPOST('id');
 				if(empty($fk_object))$fk_object=GETPOST('socid');
 				
-				TGCSToken::setSync($PDOdb,$fk_object, $object->element, $user->id);
+				$element = $object->element;
+				if ($element == 'user') $element = 'user_object';
+				
+				TGCSToken::setSync($PDOdb,$fk_object, $element, $user->id);
 				
 			}
 		
@@ -165,8 +169,9 @@ class Actionsgooglecontactsync
 	}
 	
 	function addMoreActionsButtons($parameters, &$object, &$action, $hookmanager) {
-		if (in_array('contactcard', explode(':', $parameters['context'])) 
-				|| in_array('thirdpartycard', explode(':', $parameters['context'])))
+		$TContext = explode(':', $parameters['context']);
+		
+		if (in_array('contactcard', $TContext) || in_array('thirdpartycard', $TContext) || in_array('usercard', $TContext))
 		{
 			global $langs,$user;
 			$langs->load('googlecontactsync@googlecontactsync');
@@ -191,6 +196,10 @@ class Actionsgooglecontactsync
 				        echo '<a class="butAction" href="'.dol_buildpath('/societe/card.php',1).'?socid='.$object->id.'&action=syncToPhone">'.$langs->trans('SyncCardToPhone').'</a>';
 				    }
 					
+				}
+				else if ($object->element == 'user')
+				{
+					echo '<a class="butAction" href="'.dol_buildpath('/user/card.php',1).'?id='.$object->id.'&action=syncToPhone">'.$langs->trans('SyncCardToPhone').'</a>';
 				}
 				
 			}
