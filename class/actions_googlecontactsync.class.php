@@ -197,7 +197,7 @@ class Actionsgooglecontactsync
 				    }
 					
 				}
-				else if ($object->element == 'user')
+				else if ($object->element == 'user' && empty($object->socid))
 				{
 					echo '<a class="butAction" href="'.dol_buildpath('/user/card.php',1).'?id='.$object->id.'&action=syncToPhone">'.$langs->trans('SyncCardToPhone').'</a>';
 				}
