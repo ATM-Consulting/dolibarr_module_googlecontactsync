@@ -5,18 +5,20 @@ class TGCSToken extends TObjetStd {
 	static public $table = 'gcs_token';
 	
     function __construct() {
-    	global $langs;
+    	global $conf;
 		
         $this->set_table(MAIN_DB_PREFIX.self::$table);
 		
 		$this->add_champs('fk_object,fk_user,to_sync',array('type'=>'integer', 'index'=>true));
         $this->add_champs('token,refresh_token,type_object', array('type'=>'string','index'=>true));
+		$this->add_champs('entity',array('type'=>'integer', 'index'=>true, 'default'=>1));
 		
         $this->_init_vars();
 
         $this->start();
 		
 		$this->to_sync = 1;
+		$this->entity = $conf->entity;
 		
 	}
 
@@ -267,8 +269,10 @@ class TGCSToken extends TObjetStd {
 	}
 	
 	public function loadByObject(&$PDOdb, $fk_object, $type_object, $fk_user = 0) {
+		global $conf;
 		
 		$sql = "SELECT rowid FROM ".MAIN_DB_PREFIX.self::$table." WHERE fk_object=".(int)$fk_object." AND type_object='".$type_object."'";
+		$sql.= ' AND entity = '.$conf->entity;
 		
 		if(!empty($fk_user)) $sql.=" AND fk_user = ".$fk_user;
 		
@@ -282,8 +286,10 @@ class TGCSToken extends TObjetStd {
 	}
 
 	public static function getTokenToSync(&$PDOdb, $fk_user = 0, $nb = 5) {
+		global $conf;
 		
 		$sql = "SELECT rowid FROM ".MAIN_DB_PREFIX.self::$table." WHERE to_sync = 1 ";
+		$sql.= ' AND entity = '.$conf->entity;
 		if($fk_user>0)$sql.=" AND fk_user=".$fk_user;
 		
 		$sql.=" LIMIT ".$nb;
@@ -315,10 +321,13 @@ class TGCSToken extends TObjetStd {
 	}
 
 	public static function setSyncAll(TPDOdb &$PDOdb, $fk_object, $type_object) {
+		global $conf;
+		
 		if(empty($fk_object) || empty($type_object) ) return false;
 		
 		$TUser = $PDOdb->ExecuteAsArray("SELECT fk_object FROM ".MAIN_DB_PREFIX.self::$table."
-				WHERE type_object='user' AND refresh_token!='' ");
+				WHERE type_object='user' AND refresh_token!='' AND entity = ".$conf->entity);
+		
 	//	var_dump($TUser);exit;
 		foreach($TUser as &$u) {
 			self::setSync($PDOdb, $fk_object, $type_object, $u->fk_object);
