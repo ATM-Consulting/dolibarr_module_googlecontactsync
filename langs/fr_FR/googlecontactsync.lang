@@ -26,6 +26,7 @@ GCS_GOOGLE_SYNC_CONTACT=Synchroniser les contacts
 GCS_GOOGLE_SYNC_THIRDPARTY=Synchroniser les tiers
 GCS_GOOGLE_SYNC_USER=Synchroniser les utilisateurs
 GCS_GOOGLE_SYNC_CONTACT_ALL_USER=Synchroniser avec tous les utilisateurs à la création/modification d'une fiche
+GCS_GOOGLE_SYNC_ALL_CONTACT_FROM_SOCIETE=La synchronisation d'un tiers, synchronisera aussi la liste des contacts actifs du tiers
 
 RemoveToken=Supprimer mon token de connexion
 TestToken=Tester la connexion avec votre carnet d'adresse
