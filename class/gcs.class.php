@@ -69,6 +69,29 @@ class TGCSToken extends TObjetStd {
 			$TCategContact = $categObject->containing($this->fk_object, 'contact');
 			if(is_array($TCategContact)) $TCateg = $TCategContact;
 		}
+		else if ($this->type_object == 'user_object')
+		{
+			dol_include_once('/user/class/user.class.php');
+			$object = new \User($db);
+			
+			$object->fetch($this->fk_object);
+			$object->name = $object->getFullName($langs);
+//			$object->email = $object->email;
+			$object->phone = $object->office_phone;
+//			
+			if (!empty($object->fk_soc))
+			{
+				$object->fetch_thirdparty();
+				$object->organization = $object->thirdparty->name;
+			}
+			else
+			{
+				global $mysoc;
+				$object->organization = $mysoc->nom;
+			}
+			
+			$object->dolibarrUrl = dol_buildpath('/user/card.php?id='.$this->fk_object, 2);
+		}
 		
 		
 		if(is_object($object)) {
