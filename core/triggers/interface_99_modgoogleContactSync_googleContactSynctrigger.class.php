@@ -118,7 +118,7 @@ class InterfacegoogleContactSynctrigger
         // Users
         if ( (($action == 'COMPANY_CREATE' || $action == 'COMPANY_MODIFY') && !empty($conf->global->GCS_GOOGLE_SYNC_THIRDPARTY)) 
         	|| (($action == 'CONTACT_MODIFY' || $action == 'CONTACT_CREATE') && !empty($conf->global->GCS_GOOGLE_SYNC_CONTACT)) 
-			|| (($action == 'USER_CREATE' || $action == 'USER_MODIFY') && !empty($conf->global->GCS_GOOGLE_SYNC_USER)) 
+			|| (($action == 'USER_CREATE' || $action == 'USER_MODIFY') && !empty($conf->global->GCS_GOOGLE_SYNC_USER) && !in_array(GETPOST('action'), array('delrights', 'addrights'))) 
 		) {
         	
 			define('INC_FROM_DOLIBARR',true);
