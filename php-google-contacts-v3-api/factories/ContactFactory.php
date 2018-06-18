@@ -106,8 +106,8 @@ abstract class ContactFactory
 
         $req = new \Google_Http_Request($selfURL);
         $req->setRequestHeaders(array(
-		'GData-Version' => '3.0'
-	));
+			'GData-Version' => '3.0'
+		));
 
         $val = $client->getAuth()->authenticatedRequest($req);
 
@@ -116,10 +116,10 @@ abstract class ContactFactory
 //echo $response;exit;
         $xmlContact = simplexml_load_string($response);
 
-	if($xmlContact === false) {
-		echo "Wrong call : ".$selfURL."<br />";
-		return false;
-	}
+		if($xmlContact === false) {
+			echo "Wrong call : ".$selfURL."<br />";
+			return false;
+		}
 /*echo $selfURL;
 	pre($xmlContact,true);exit;
 	*/
@@ -170,16 +170,16 @@ abstract class ContactFactory
 
     public static function submitUpdates(Contact $updatedContact)
     {
-	global $langs;
-	$langs->load('companies');
-	$langs->load('googlecontactsync@googlecontactsync');
+		global $langs;
+		$langs->load('companies');
+		$langs->load('googlecontactsync@googlecontactsync');
 
         $client = GoogleHelper::getClient();
 
         $req = new \Google_Http_Request($updatedContact->selfURL);
         $req->setRequestHeaders(array(
-		'GData-Version' => '3.0'
-	));
+			'GData-Version' => '3.0'
+		));
 
         $val = $client->getAuth()->authenticatedRequest($req);
 
@@ -196,16 +196,17 @@ abstract class ContactFactory
         $xmlContactsEntry->title = $updatedContact->name;
 
         $contactGDNodes = $xmlContactsEntry->children('http://schemas.google.com/g/2005');
-	$contactGContactNodes = $xmlContactsEntry->children('http://schemas.google.com/contact/2008');
+		$contactGContactNodes = $xmlContactsEntry->children('http://schemas.google.com/contact/2008');
 
 
 	// Edition des noeuds du namespace XML gd
 
-	unset($contactGDNodes->name);
-	if(! empty($updatedContact->name)) {
-        	$o = $xmlContactsEntry->addChild('name', null, 'http://schemas.google.com/g/2005');
-		$o->addChild('fullName', $updatedContact->name, 'http://schemas.google.com/g/2005');
-	}
+		unset($contactGDNodes->name);
+		if (!empty($updatedContact->name))
+		{
+			$o = $xmlContactsEntry->addChild('name', null, 'http://schemas.google.com/g/2005');
+			$o->addChild('fullName', $updatedContact->name, 'http://schemas.google.com/g/2005');
+		}
 
        	unset($contactGDNodes->email);
         if(!empty($updatedContact->email)) {
@@ -217,11 +218,13 @@ abstract class ContactFactory
      	unset($contactGDNodes->phoneNumber);
         foreach($updatedContact->phoneNumbers as $type=>$number) {
         	
-        	if($type == 'work') $rel ='http://schemas.google.com/g/2005#work';
-        	else if($type == 'mobile') $rel ='http://schemas.google.com/g/2005#work_mobile';
-        	else if($type == 'perso') $rel ='http://schemas.google.com/g/2005#mobile';
-        	else if($type == 'fax') $rel ='http://schemas.google.com/g/2005#fax';
-        	 else continue;
+        	if ($type == 'work') $rel = 'http://schemas.google.com/g/2005#work';
+			else if ($type == 'mobile') $rel = 'http://schemas.google.com/g/2005#work_mobile';
+			else if ($type == 'perso') $rel = 'http://schemas.google.com/g/2005#mobile';
+			else if ($type == 'home') $rel = 'http://schemas.google.com/g/2005#home';
+			else if ($type == 'other') $rel = 'http://schemas.google.com/g/2005#other';
+			else if ($type == 'fax') $rel = 'http://schemas.google.com/g/2005#fax';
+			else continue;
         	
         	$o = $xmlContactsEntry->addChild('phoneNumber',$number,'http://schemas.google.com/g/2005');
         	$o->addAttribute('rel', $rel);
@@ -233,7 +236,7 @@ abstract class ContactFactory
         	$o = $xmlContactsEntry->addChild('structuredPostalAddress', null,'http://schemas.google.com/g/2005');
         	$o->addAttribute('rel', 'http://schemas.google.com/g/2005#work');
         	$o->addAttribute('primary', 'true');
-		$o->addChild('formattedAddress', $updatedContact->postalAddress, 'http://schemas.google.com/g/2005');
+			$o->addChild('formattedAddress', $updatedContact->postalAddress, 'http://schemas.google.com/g/2005');
         }
 
         /*
@@ -247,66 +250,66 @@ gd:country?
          * 
          */
 
-	unset($contactGDNodes->organization);
-	if(! empty($updatedContact->organization) || ! empty($updatedContact->organization_title)) {
-        	$o = $xmlContactsEntry->addChild('organization', null, 'http://schemas.google.com/g/2005');
-		$o->addAttribute('rel', 'http://schemas.google.com/g/2005#work');
+		unset($contactGDNodes->organization);
+		if(! empty($updatedContact->organization) || ! empty($updatedContact->organization_title)) {
+			$o = $xmlContactsEntry->addChild('organization', null, 'http://schemas.google.com/g/2005');
+			$o->addAttribute('rel', 'http://schemas.google.com/g/2005#work');
 
-		if(! empty($updatedContact->organization)) {
-			$o->addChild('orgName', $updatedContact->organization, 'http://schemas.google.com/g/2005');
-		}
+			if(! empty($updatedContact->organization)) {
+				$o->addChild('orgName', $updatedContact->organization, 'http://schemas.google.com/g/2005');
+			}
 
-		if(! empty($updatedContact->organization_title)) {
-			$o->addChild('orgTitle', $updatedContact->organization_title, 'http://schemas.google.com/g/2005');
+			if(! empty($updatedContact->organization_title)) {
+				$o->addChild('orgTitle', $updatedContact->organization_title, 'http://schemas.google.com/g/2005');
+			}
 		}
-	}
 
 	// Edition des noeuds du namespace XML gContact
 
         unset($contactGContactNodes->website);
-	if (! empty($updatedContact->website))
-	{
-		$o = $xmlContactsEntry->addChild('website', null, 'http://schemas.google.com/contact/2008');
-		$o->addAttribute('href', $updatedContact->website);
-		$o->addAttribute('label', $langs->trans('DolibarrURL'));
-	}
+		if (! empty($updatedContact->website))
+		{
+			$o = $xmlContactsEntry->addChild('website', null, 'http://schemas.google.com/contact/2008');
+			$o->addAttribute('href', $updatedContact->website);
+			$o->addAttribute('label', $langs->trans('DolibarrURL'));
+		}
         
        	unset($contactGContactNodes->groupMembershipInfo);
         if(!empty($updatedContact->groupMembershipInfo)) {
         	foreach($updatedContact->groupMembershipInfo as $group) {
-			$o = $xmlContactsEntry->addChild('groupMembershipInfo',null,'http://schemas.google.com/contact/2008');
-        		$o->addAttribute('deleted', 'false');
-        		$o->addAttribute('href', $group);
-		}
+				$o = $xmlContactsEntry->addChild('groupMembershipInfo',null,'http://schemas.google.com/contact/2008');
+				$o->addAttribute('deleted', 'false');
+				$o->addAttribute('href', $group);
+			}
         }
 
-	unset($contactGContactNodes->userDefinedField);
-	if(!empty($updatedContact->code_client) || !empty($updatedContact->code_fournisseur)) {
+		unset($contactGContactNodes->userDefinedField);
+		if(!empty($updatedContact->code_client) || !empty($updatedContact->code_fournisseur)) {
 
-		if(!empty($updatedContact->code_client)) {
-			$o = $xmlContactsEntry->addChild('userDefinedField', null, 'http://schemas.google.com/contact/2008');
-			$o->addAttribute('key', $langs->trans('CustomerCode'));
-			$o->addAttribute('value', $updatedContact->code_client);
+			if(!empty($updatedContact->code_client)) {
+				$o = $xmlContactsEntry->addChild('userDefinedField', null, 'http://schemas.google.com/contact/2008');
+				$o->addAttribute('key', $langs->trans('CustomerCode'));
+				$o->addAttribute('value', $updatedContact->code_client);
+			}
+
+			if(!empty($updatedContact->code_fournisseur)) {
+				$o = $xmlContactsEntry->addChild('userDefinedField', null, 'http://schemas.google.com/contact/2008');
+				$o->addAttribute('key', $langs->trans('SupplierCode'));
+				$o->addAttribute('value', $updatedContact->code_fournisseur);
+			}
 		}
 
-		if(!empty($updatedContact->code_fournisseur)) {
-			$o = $xmlContactsEntry->addChild('userDefinedField', null, 'http://schemas.google.com/contact/2008');
-			$o->addAttribute('key', $langs->trans('SupplierCode'));
-			$o->addAttribute('value', $updatedContact->code_fournisseur);
-		}
-	}
-
-	unset($xmlContactsEntry->updated);
-	$xmlContactsEntry->addChild('updated', date('c'));
+		unset($xmlContactsEntry->updated);
+		$xmlContactsEntry->addChild('updated', date('c'));
 
         $updatedXML = $xmlContactsEntry->asXML();
      	//pre(htmlentities($updatedXML),true);
         $req = new \Google_Http_Request('https://www.google.com/m8/feeds/contacts/default/full/'.basename($updatedContact->id));
         $req->setRequestHeaders(array(
-		'Content-Type' => 'application/atom+xml; charset=UTF-8; type=entry'
-		,'GData-Version' => '3.0'
-		,'If-Match' => '*'
-	));
+			'Content-Type' => 'application/atom+xml; charset=UTF-8; type=entry'
+			,'GData-Version' => '3.0'
+			,'If-Match' => '*'
+		));
         $req->setRequestMethod('PUT');
         $req->setPostBody($updatedXML);
 
