@@ -336,37 +336,103 @@ class TGCSToken extends TObjetStd {
 		
 	}
 	
+	public static function getUserToTest($fk_user)
+	{
+		global $TUserTmpGSC,$db;
+		
+		if (!empty($TUserTmpGSC[$fk_user])) return $TUserTmpGSC[$fk_user];
+		
+		$u = new User($db);
+		if ($u->fetch($fk_user) > 0)
+		{
+			$u->getrights('societe');
+			$TUserTmpGSC[$fk_user] = $u;
+			
+			return $u;
+		}
+		
+		if (!empty($u->error)) dol_print_error($u->db, $u->error);
+		
+		return false; // User not found or SQL error
+	}
+	
+	public static function allowedToSync($fk_object, $type_object, $fk_user)
+	{
+		global $db,$conf;
+		
+		if ($type_object == 'company' || $type_object == 'societe' || $type_object == 'contact')
+		{
+			$userToTest = self::getUserToTest($fk_user);
+			
+			// Pas le droit "Etendre l'accès à tous les tiers..." && conf cachée non définie permettant d'usurper cette nouvelle restriction (cad, conserver le comportement d'avant)
+			if (empty($userToTest->rights->societe->client->voir) && empty($conf->global->GCS_GOOGLE_SYNC_CONTACT_ALL_USER_GET_REKT_RIGHTS))
+			{
+				if ($type_object == 'company' || $type_object == 'societe')
+				{
+					$societe = new Societe($db);
+					$societe->fetch($fk_object);
+					$listsalesrepresentatives=$societe->getSalesRepresentatives($userToTest);
+				}
+				else if ($type_object == 'contact')
+				{
+					$contact = new Contact($db);
+					$contact->fetch($fk_object);
+					$contact->fetch_thirdparty();
+					$listsalesrepresentatives=$contact->thirdparty->getSalesRepresentatives($userToTest);
+				}
+				
+				// Si la variable existe, alors il faut tester son contenu même si vide
+				if (isset($listsalesrepresentatives))
+				{
+					$result = array_filter($listsalesrepresentatives, function($Tab) use ($userToTest) {
+						if ($userToTest->id == $Tab['id']) return true;
+						return false;
+					});
+
+					if (empty($result)) return false;
+				}
+			}
+		}
+		else if ($type_object == 'user_object')
+		{
+			// Tentative de synchro d'une fiche user avec lui même (pas vraiment de sens de ce synchro avec soit même)
+			if ($fk_user == $fk_object) return false;
+		}
+		
+		return true;
+	}
+	
 	public static function setSync(&$PDOdb, $fk_object, $type_object, $fk_user) {
 		global $conf;
 		
-		if(empty($fk_object) || empty($type_object) ) return false;
-			
-			$token = new TGCSToken;
-			$token->loadByObject($PDOdb, $fk_object, $type_object, $fk_user);
-			$token->fk_object = $fk_object;
-			$token->type_object = $type_object;
-			$token->fk_user = $fk_user;
-			$token->to_sync = 1;
-			$token->save($PDOdb);
+		if (empty($fk_object) || empty($type_object) || !self::allowedToSync($fk_object, $type_object, $fk_user)) return false;
 		
-			if ($type_object == 'societe' && !empty($conf->global->GCS_GOOGLE_SYNC_ALL_CONTACT_FROM_SOCIETE))
+		$token = new TGCSToken;
+		$token->loadByObject($PDOdb, $fk_object, $type_object, $fk_user);
+		$token->fk_object = $fk_object;
+		$token->type_object = $type_object;
+		$token->fk_user = $fk_user;
+		$token->to_sync = 1;
+		$token->save($PDOdb);
+
+		if ($type_object == 'societe' && !empty($conf->global->GCS_GOOGLE_SYNC_ALL_CONTACT_FROM_SOCIETE))
+		{
+			$TContactId = TRequeteCore::get_id_from_what_you_want($PDOdb, MAIN_DB_PREFIX.'socpeople', array('fk_soc'=>$fk_object,'statut'=>1));
+			foreach ($TContactId as $fk_socpeople)
 			{
-				$TContactId = TRequeteCore::get_id_from_what_you_want($PDOdb, MAIN_DB_PREFIX.'socpeople', array('fk_soc'=>$fk_object,'statut'=>1));
-				foreach ($TContactId as $fk_socpeople)
-				{
-					self::setSync($PDOdb, $fk_socpeople, 'contact', $fk_user);
-				}
+				self::setSync($PDOdb, $fk_socpeople, 'contact', $fk_user);
 			}
-			
-			global $langs;
-			
-			$langs->load('googlecontactsync@googlecontactsync');
-			
-			global $google_sync_message_sync_ok;
-			
-			if(empty($google_sync_message_sync_ok)) setEventMessage($langs->trans('SyncObjectInitiated'));
-			
-			$google_sync_message_sync_ok = true;
+		}
+
+		global $langs;
+
+		$langs->load('googlecontactsync@googlecontactsync');
+
+		global $google_sync_message_sync_ok;
+
+		if(empty($google_sync_message_sync_ok)) setEventMessage($langs->trans('SyncObjectInitiated'));
+
+		$google_sync_message_sync_ok = true;
 	}
 
 	public static function setGroup(&$PDOdb, $fk_user, $name) {

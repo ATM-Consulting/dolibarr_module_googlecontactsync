@@ -118,7 +118,7 @@ class InterfacegoogleContactSynctrigger
         // Users
         if ( (($action == 'COMPANY_CREATE' || $action == 'COMPANY_MODIFY') && !empty($conf->global->GCS_GOOGLE_SYNC_THIRDPARTY)) 
         	|| (($action == 'CONTACT_MODIFY' || $action == 'CONTACT_CREATE') && !empty($conf->global->GCS_GOOGLE_SYNC_CONTACT)) 
-			|| (($action == 'USER_CREATE' || $action == 'USER_MODIFY') && !empty($conf->global->GCS_GOOGLE_SYNC_USER) && empty($object->socid)) 
+			|| (($action == 'USER_CREATE' || $action == 'USER_MODIFY') && !empty($conf->global->GCS_GOOGLE_SYNC_USER) && empty($object->socid) && !in_array(GETPOST('action'), array('delrights', 'addrights'))) 
 		) {
         	
 			define('INC_FROM_DOLIBARR',true);
@@ -135,11 +135,11 @@ class InterfacegoogleContactSynctrigger
 			else{
 				TGCSToken::setSync($PDOdb, $object->id, $object->element, $user->id);
 			}
-
-
-			dol_syslog(
-				"Trigger '" . $this->name . "' for action '$action' launched by " . __FILE__ . ". id=" . $object->id
-			);
+			
+			
+            dol_syslog(
+                "Trigger '" . $this->name . "' for action '$action' launched by " . __FILE__ . ". id=" . $object->id
+            );
         } 
         return 0;
     }
