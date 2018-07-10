@@ -36,7 +36,7 @@ echo count($Tab);
 		if ($type_object == 'contact' && (empty($conf->global->GCS_GOOGLE_SYNC_CONTACT) || !empty($conf->global->GCS_GOOGLE_SYNC_ALL_CONTACT_FROM_SOCIETE))) continue;
 		if ($type_object == 'user_object' && empty($conf->global->GCS_GOOGLE_SYNC_USER)) continue;
 		
-		
+		// TODO remplacer le save par un appel à ::setSync(&$PDOdb, $fk_object, $type_object, $fk_user)
 			$token = new TGCSToken;
 			$token->loadByObject($PDOdb, $fk_object, $type_object, $fk_user);
 			$token->fk_object = $fk_object;
