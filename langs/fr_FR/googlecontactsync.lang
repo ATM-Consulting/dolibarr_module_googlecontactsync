@@ -35,3 +35,6 @@ TokenSeemsKO=L'interrogation de votre carnet ne retourne aucun résultat (peut-�
 TokenSeemsOK=L'interrogation de votre carnet retourne des résultats
 
 DolibarrURL=URL Dolibarr
+
+
+GCSCronjob_label=Sync google contact

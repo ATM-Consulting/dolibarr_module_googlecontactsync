@@ -44,6 +44,7 @@ class modgoogleContactSync extends DolibarrModules
 
         $this->db = $db;
 
+		$langs->load('googlecontactsync@googlecontactsync');
 		// Id for module (must be unique).
 		// Use here a free id (See in Home -> System information -> Dolibarr for list of used modules id).
 		$this->numero = 104029; // 104000 to 104999 for ATM CONSULTING
@@ -90,7 +91,7 @@ class modgoogleContactSync extends DolibarrModules
 		$this->module_parts = array(
 			'hooks'=>array('usercard','contactcard','thirdpartycard')
 			,'triggers'=>1
-			,'js'=>array('/googlecontactsync/js/checker.js.php')
+			,'js'=>array() // 
 		);
 
 		// Data directories to create when module is enabled.
@@ -250,6 +251,8 @@ class modgoogleContactSync extends DolibarrModules
 	 */
 	function init($options='')
 	{
+		global $conf,$langs,$user;
+		
 		$sql = array();
 		
 		define('INC_FROM_DOLIBARR',true);
@@ -259,6 +262,27 @@ class modgoogleContactSync extends DolibarrModules
 
 		$result=$this->_load_tables('/googlecontactsync/sql/');
 
+				require_once DOL_DOCUMENT_ROOT.'/cron/class/cronjob.class.php';
+		$cronjob = new Cronjob($this->db);
+		// Techniquement il n'y a pas besoin de checker la présence du cronjob car la tâche est delete si on désactive le module (à voir si c'est bien le cas sur les versions < 7.0)
+		$cronjob->fetch_all('DESC', 't.rowid', 0, 0, -1, array('objectname' => 'TGCSToken', 'methodename' => 'cronjob_nyancat', 'module_name' => 'googlecontactsync', 'entity' => $conf->entity));
+		if (empty($cronjob->lines))
+		{
+			$cronjob->label = $langs->trans('GCSCronjob_label');
+			$cronjob->note = '';
+			$cronjob->jobtype = 'method';
+			$cronjob->frequency = 30; // tous les 30...
+			$cronjob->unitfrequency = 60; // ...minutes
+			$cronjob->status = 0;
+			$cronjob->module_name = 'googlecontactsync';
+			$cronjob->classesname = '/googlecontactsync/class/gcs.class.php';
+			$cronjob->objectname = 'TGCSToken';
+			$cronjob->methodename = 'gcs_cronjob_nyancat';
+			$cronjob->params = '50';
+			$cronjob->datestart = strtotime(date('Y-m-d 12:00:00'));
+			$cronjob->create($user);
+		}
+		
 		return $this->_init($sql, $options);
 	}
 

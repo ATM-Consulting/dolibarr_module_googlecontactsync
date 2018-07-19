@@ -5,7 +5,7 @@
 	
 ?>
 $(document).ready(function() {
-
+	console.log('Please, enable GSC_DISABLE_JS_SYNC and use cron job');
 	window.setTimeout(gcscksync,5000);
 	
 });

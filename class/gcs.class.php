@@ -1,5 +1,11 @@
 <?php
 
+if (!class_exists('TObjetStd'))
+{
+	define('INC_FROM_DOLIBARR', true);
+	require_once dirname(__FILE__).'/../config.php';
+}
+
 class TGCSToken extends TObjetStd {
 
 	static public $table = 'gcs_token';
@@ -22,6 +28,40 @@ class TGCSToken extends TObjetStd {
 		
 	}
 
+	public function gcs_cronjob_nyancat($nb=50)
+	{
+		global $db;
+
+		if ($nb > 0)
+		{
+			$PDOdb=new \TPDOdb;
+			$TToken = \TGCSToken::getTokenToSync($PDOdb, 0, $nb, false);
+			
+			$user = new User($db);
+			foreach($TToken as &$token) {
+				if ($user->id != $token->fk_user)
+				{
+					$user = new User($db);
+					$user->fetch($token->fk_user);
+				}
+				
+				$res = $token->sync($PDOdb);
+				if ($res)
+				{
+					$token->to_sync = 0;
+					$token->save($PDOdb);
+					$this->output.= '('.$token->id.') User id ['.$token->fk_user.'] sync object ['.$token->type_object.'] with id ['.$token->fk_object.']'."\n";
+				}
+				else
+				{
+					$this->output.= 'FAIL Sync - ('.$token->id.') User id ['.$token->fk_user.'] sync object ['.$token->type_object.'] with id ['.$token->fk_object.']'."\n";
+				}
+			}
+		}
+		
+		return 0;
+	}
+	
 	public function getObject() {
 		global $conf,$db,$user,$langs;
 		
@@ -285,13 +325,13 @@ class TGCSToken extends TObjetStd {
 		return false;
 	}
 
-	public static function getTokenToSync(&$PDOdb, $fk_user = 0, $nb = 5) {
+	public static function getTokenToSync(&$PDOdb, $fk_user = 0, $nb = 5, $filter_entity=true) {
 		global $conf;
 		
 		$sql = "SELECT rowid FROM ".MAIN_DB_PREFIX.self::$table." WHERE to_sync = 1 ";
-		$sql.= ' AND entity = '.$conf->entity;
+		if ($filter_entity) $sql.= ' AND entity = '.$conf->entity;
 		if($fk_user>0)$sql.=" AND fk_user=".$fk_user;
-		
+		$sql.= ' AND type_object != \'user\'';
 		$sql.=" LIMIT ".$nb;
 		$Tab = $PDOdb->ExecuteAsArray($sql);
 		
@@ -319,21 +359,28 @@ class TGCSToken extends TObjetStd {
 	
 		return false;
 	}
-
+	
+	/**
+	 * Pour 1 type_object (societe, contact, user_object) avec son identidiant ($fk_object), met à jour la table
+	 * pour que tous les user autorisés à sync l'item passe l'attribut "to_sync" à 1
+	 * 
+	 * @global type $conf
+	 * @param TPDOdb $PDOdb
+	 * @param type $fk_object
+	 * @param type $type_object
+	 * @return boolean
+	 */
 	public static function setSyncAll(TPDOdb &$PDOdb, $fk_object, $type_object) {
 		global $conf;
 		
 		if(empty($fk_object) || empty($type_object) ) return false;
 		
-		$TUser = $PDOdb->ExecuteAsArray("SELECT fk_object FROM ".MAIN_DB_PREFIX.self::$table."
+		$TUserToken = $PDOdb->ExecuteAsArray("SELECT fk_object FROM ".MAIN_DB_PREFIX.self::$table."
 				WHERE type_object='user' AND refresh_token!='' AND entity = ".$conf->entity);
 		
-	//	var_dump($TUser);exit;
-		foreach($TUser as &$u) {
+		foreach($TUserToken as &$u) {
 			self::setSync($PDOdb, $fk_object, $type_object, $u->fk_object);
 		}
-		
-		
 	}
 	
 	public static function getUserToTest($fk_user)
@@ -363,33 +410,33 @@ class TGCSToken extends TObjetStd {
 		if ($type_object == 'company' || $type_object == 'societe' || $type_object == 'contact')
 		{
 			$userToTest = self::getUserToTest($fk_user);
-			
-			// Pas le droit "Etendre l'accès à tous les tiers..." && conf cachée non définie permettant d'usurper cette nouvelle restriction (cad, conserver le comportement d'avant)
-			if (empty($userToTest->rights->societe->client->voir) && empty($conf->global->GCS_GOOGLE_SYNC_CONTACT_ALL_USER_GET_REKT_RIGHTS))
+			// !Pas le droit (donc a le droit) "Etendre l'accès à tous les tiers..." || conf cachée définie permettant d'usurper cette nouvelle restriction (cad, conserver le comportement d'avant)
+			if (!empty($userToTest->rights->societe->client->voir) || !empty($conf->global->GCS_GOOGLE_SYNC_CONTACT_ALL_USER_GET_REKT_RIGHTS))
 			{
 				if ($type_object == 'company' || $type_object == 'societe')
 				{
+					if (!class_exists('Societe')) require_once DOL_DOCUMENT_ROOT.'/societe/class/societe.class.php';
 					$societe = new Societe($db);
 					$societe->fetch($fk_object);
 					$listsalesrepresentatives=$societe->getSalesRepresentatives($userToTest);
 				}
 				else if ($type_object == 'contact')
 				{
+					if (!class_exists('Contact')) require_once DOL_DOCUMENT_ROOT.'/contact/class/contact.class.php';
 					$contact = new Contact($db);
 					$contact->fetch($fk_object);
 					$contact->fetch_thirdparty();
+					if (empty($contact->thirdparty->id)) return false; // Contact sans Tiers
 					$listsalesrepresentatives=$contact->thirdparty->getSalesRepresentatives($userToTest);
 				}
 				
 				// Si la variable existe, alors il faut tester son contenu même si vide
 				if (isset($listsalesrepresentatives))
 				{
-					$result = array_filter($listsalesrepresentatives, function($Tab) use ($userToTest) {
-						if ($userToTest->id == $Tab['id']) return true;
-						return false;
-					});
-
-					if (empty($result)) return false;
+					foreach ($listsalesrepresentatives as $info)
+					{
+						if ($userToTest->id == $info['id']) return true;
+					}
 				}
 			}
 		}
@@ -399,9 +446,21 @@ class TGCSToken extends TObjetStd {
 			if ($fk_user == $fk_object) return false;
 		}
 		
-		return true;
+		return false;
 	}
 	
+	/**
+	 * Méthode qui détermine si le $fk_user est autorisé à passer l'attribut "to_sync" à 1
+	 * 
+	 * @global type $conf
+	 * @global type $langs
+	 * @global boolean $google_sync_message_sync_ok
+	 * @param type $PDOdb
+	 * @param type $fk_object
+	 * @param type $type_object
+	 * @param type $fk_user
+	 * @return boolean
+	 */
 	public static function setSync(&$PDOdb, $fk_object, $type_object, $fk_user) {
 		global $conf;
 		
