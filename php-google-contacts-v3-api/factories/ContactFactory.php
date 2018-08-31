@@ -304,6 +304,7 @@ gd:country?
 
         $updatedXML = $xmlContactsEntry->asXML();
      	//pre(htmlentities($updatedXML),true);
+// TODO remplacer "default" par l'adresse mail $userUsedToSync->email si nécessaire
         $req = new \Google_Http_Request('https://www.google.com/m8/feeds/contacts/default/full/'.basename($updatedContact->id));
         $req->setRequestHeaders(array(
 			'Content-Type' => 'application/atom+xml; charset=UTF-8; type=entry'

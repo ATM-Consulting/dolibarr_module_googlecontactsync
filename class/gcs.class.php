@@ -46,15 +46,16 @@ class TGCSToken extends TObjetStd {
 				}
 				
 				$res = $token->sync($PDOdb);
-				if ($res)
+				if ($res === 0) {} // Do nothing
+				else if ($res < 0)
 				{
-					$token->to_sync = 0;
-					$token->save($PDOdb);
-					$this->output.= '('.$token->id.') User id ['.$token->fk_user.'] sync object ['.$token->type_object.'] with id ['.$token->fk_object.']'."\n";
+					$this->output.= 'FAIL Sync - (token id: '.$token->id.') User id ['.$token->fk_user.'] sync object ['.$token->type_object.'] with id ['.$token->fk_object.']'."\n";
 				}
 				else
 				{
-					$this->output.= 'FAIL Sync - ('.$token->id.') User id ['.$token->fk_user.'] sync object ['.$token->type_object.'] with id ['.$token->fk_object.']'."\n";
+					$token->to_sync = 0;
+					$token->save($PDOdb);
+					$this->output.= '(token id: '.$token->id.') User id ['.$token->fk_user.'] sync object ['.$token->type_object.'] with id ['.$token->fk_object.']'."\n";
 				}
 			}
 		}
@@ -158,7 +159,7 @@ class TGCSToken extends TObjetStd {
 	}
 
 	public function sync(&$PDOdb) {
-		global $conf, $user;
+		global $db, $conf, $user, $userUsedToSync;
 
 		$object = $this->getObject();	
 //var_dump($object);
@@ -166,6 +167,14 @@ class TGCSToken extends TObjetStd {
 		require_once __DIR__.'/../php-google-contacts-v3-api/vendor/autoload.php';
 		
 		$_SESSION['GCS_fk_user'] = $this->fk_user; // TODO i'm shiting in the rain ! AA 
+		
+		if (empty($userUsedToSync) || $userUsedToSync->id != $this->fk_user)
+		{
+			$userUsedToSync = new User($db);
+			$userUsedToSync->fetch($this->fk_user);
+		}
+		
+		if (empty($userUsedToSync->email)) return 0; // User sans adresse mail, on fait rien
 		
 		$TPhone = array();
 		if(!empty($object->phone)) $TPhone['work'] =$object->phone;
@@ -176,8 +185,7 @@ class TGCSToken extends TObjetStd {
 		$object->phone = self::normalize($TPhone['work']);
 		$object->email = self::normalize($object->email);
 		if($this->token) {
-			$contact = rapidweb\googlecontacts\factories\ContactFactory::getBySelfURL($this->token);	
-//		var_dump($contact,$this);exit;
+			$contact = rapidweb\googlecontacts\factories\ContactFactory::getBySelfURL($this->token);
 		}
 		
 		if(empty($contact->id)) {
@@ -212,7 +220,7 @@ class TGCSToken extends TObjetStd {
 
 
 		$contact->groupMembershipInfo = array(
-			0 => 'http://www.google.com/m8/feeds/groups/'.urlencode($user->email).'/base/6' // Groupe 6 = liste globale des contacts
+			0 => 'http://www.google.com/m8/feeds/groups/'.urlencode($userUsedToSync->email).'/base/6' // Groupe 6 = liste globale des contacts
 		);
 
 		if(!empty($conf->global->GCS_GOOGLE_GROUP_NAME)) {
@@ -230,7 +238,7 @@ class TGCSToken extends TObjetStd {
 		$contactAfterUpdate = rapidweb\googlecontacts\factories\ContactFactory::submitUpdates($contact);
 
 		if(!empty($contactAfterUpdate->id)) return $contactAfterUpdate;
-		else return false;
+		else return -1;
 	}
 
 	public function optimizedSync(&$PDOdb) {
