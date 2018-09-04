@@ -35,16 +35,10 @@ class TGCSToken extends TObjetStd {
 		if ($nb > 0)
 		{
 			$PDOdb=new \TPDOdb;
-			$TToken = \TGCSToken::getTokenToSync($PDOdb, 0, $nb, false);
+			$TToken = \TGCSToken::getTokenToSync($PDOdb, 0, $nb, false); // Récupération de tous les objets à synchroniser (Societe, Contact, ...)
 			
-			$user = new User($db);
-			foreach($TToken as &$token) {
-				if ($user->id != $token->fk_user)
-				{
-					$user = new User($db);
-					$user->fetch($token->fk_user);
-				}
-				
+			foreach($TToken as &$token)
+			{
 				$res = $token->sync($PDOdb);
 				if ($res === 0) {} // Do nothing
 				else if ($res < 0)
@@ -336,10 +330,13 @@ class TGCSToken extends TObjetStd {
 	public static function getTokenToSync(&$PDOdb, $fk_user = 0, $nb = 5, $filter_entity=true) {
 		global $conf;
 		
-		$sql = "SELECT rowid FROM ".MAIN_DB_PREFIX.self::$table." WHERE to_sync = 1 ";
-		if ($filter_entity) $sql.= ' AND entity = '.$conf->entity;
-		if($fk_user>0)$sql.=" AND fk_user=".$fk_user;
-		$sql.= ' AND type_object != \'user\'';
+		$sql = "SELECT t.rowid FROM ".MAIN_DB_PREFIX.self::$table." t";
+		$sql.= " INNER JOIN ".MAIN_DB_PREFIX."user u ON (u.rowid = t.fk_user)";
+		$sql.= " WHERE to_sync = 1 ";
+		if ($filter_entity) $sql.= ' AND t.entity = '.$conf->entity;
+		if($fk_user>0)$sql.=" AND t.fk_user=".$fk_user;
+		$sql.= ' AND t.type_object != \'user\'';
+		$sql.= ' AND u.statut = 1'; // Je veux uniquement les objets dont l'utilisateur est actif
 		$sql.=" LIMIT ".$nb;
 		$Tab = $PDOdb->ExecuteAsArray($sql);
 		
