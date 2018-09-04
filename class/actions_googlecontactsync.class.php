@@ -164,7 +164,9 @@ class Actionsgooglecontactsync
 				$element = $object->element;
 				if ($element == 'user') $element = 'user_object';
 				
-				$r=TGCSToken::setSync($PDOdb,$fk_object, $element, $user->id);
+				if(!empty($conf->global->GCS_GOOGLE_SYNC_CONTACT_ALL_USER)) $r=TGCSToken::setSyncAll($PDOdb,$fk_object, $element, $user->id);
+				else $r=TGCSToken::setSync($PDOdb,$fk_object, $element, $user->id);
+				
 				header('Location: '.$_SERVER['PHP_SELF'].'?'.$attr.'='.$fk_object);
 				exit;
 			}

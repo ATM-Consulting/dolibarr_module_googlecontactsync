@@ -383,8 +383,12 @@ class TGCSToken extends TObjetStd {
 		
 		if(empty($fk_object) || empty($type_object) ) return false;
 		
-		$TUserToken = $PDOdb->ExecuteAsArray("SELECT fk_object FROM ".MAIN_DB_PREFIX.self::$table."
-				WHERE type_object='user' AND refresh_token!='' AND entity = ".$conf->entity);
+		$TUserToken = $PDOdb->ExecuteAsArray("
+			SELECT t.fk_object FROM ".MAIN_DB_PREFIX.self::$table." t
+			INNER JOIN ".MAIN_DB_PREFIX."user u ON (u.rowid = t.fk_object)
+			WHERE t.type_object='user' AND t.refresh_token != '' AND t.entity = ".$conf->entity."
+			AND u.statut = 1
+		");
 		
 		foreach($TUserToken as &$u) {
 			self::setSync($PDOdb, $fk_object, $type_object, $u->fk_object);
@@ -499,6 +503,7 @@ class TGCSToken extends TObjetStd {
 			}
 		}
 
+		// DEBUT TODO : a delete, c'est inutile est ça n'a rien à faire là, c'est uniquement pour afficher un message sans le dupliquer si on passe plusieurs fois pas cette méthode
 		global $langs;
 
 		$langs->load('googlecontactsync@googlecontactsync');
@@ -508,6 +513,7 @@ class TGCSToken extends TObjetStd {
 		if(empty($google_sync_message_sync_ok)) setEventMessage($langs->trans('SyncObjectInitiated'));
 
 		$google_sync_message_sync_ok = true;
+		// FIN TODO
 		
 		return true;
 	}
