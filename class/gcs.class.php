@@ -417,9 +417,11 @@ class TGCSToken extends TObjetStd {
 		
 		if ($type_object == 'company' || $type_object == 'societe' || $type_object == 'contact')
 		{
+			$canSync = false;
 			$userToTest = self::getUserToTest($fk_user);
-			// !Pas le droit (donc a le droit) "Etendre l'accès à tous les tiers..." || conf cachée définie permettant d'usurper cette nouvelle restriction (cad, conserver le comportement d'avant)
-			if (!empty($userToTest->rights->societe->client->voir) || !empty($conf->global->GCS_GOOGLE_SYNC_CONTACT_ALL_USER_GET_REKT_RIGHTS))
+			
+			if (!empty($userToTest->rights->societe->client->voir) || !empty($conf->global->GCS_GOOGLE_SYNC_CONTACT_ALL_USER_GET_REKT_RIGHTS)) $canSync = true;
+			else
 			{
 				if ($type_object == 'company' || $type_object == 'societe')
 				{
@@ -443,10 +445,16 @@ class TGCSToken extends TObjetStd {
 				{
 					foreach ($listsalesrepresentatives as $info)
 					{
-						if ($userToTest->id == $info['id']) return true;
+						if ($userToTest->id == $info['id'])
+						{
+							$canSync = true;
+							break;
+						}
 					}
 				}
 			}
+			
+			return $canSync;
 		}
 		else if ($type_object == 'user_object')
 		{
@@ -500,6 +508,8 @@ class TGCSToken extends TObjetStd {
 		if(empty($google_sync_message_sync_ok)) setEventMessage($langs->trans('SyncObjectInitiated'));
 
 		$google_sync_message_sync_ok = true;
+		
+		return true;
 	}
 
 	public static function setGroup(&$PDOdb, $fk_user, $name) {
