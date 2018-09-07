@@ -1,5 +1,7 @@
 <?php
-
+	// call with "php" command from server
+	set_time_limit(0);
+	chdir(__DIR__);
 	require '../config.php';
 
 
@@ -30,13 +32,21 @@
 		SELECT rowid, 'user_object' as type_object FROM ".MAIN_DB_PREFIX."user WHERE 1 
 	");
 	
-echo count($Tab);
+	$count = count($Tab);
+	echo $count."<br />";
 //	var_dump($Tab);
 
+	$i=0;
 	foreach($Tab as &$row) {
+		$i++;
+		if ($i % 100 == 0) {
+			echo "iteration ".$i." / ".$count;
+			ob_flush();
+		}
+		
 		$fk_object = $row->rowid;
 		$type_object = $row->type_object;
-
+		
 		if ($type_object == 'societe' && empty($conf->global->GCS_GOOGLE_SYNC_THIRDPARTY)) continue;
 		if ($type_object == 'contact' && (empty($conf->global->GCS_GOOGLE_SYNC_CONTACT) || !empty($conf->global->GCS_GOOGLE_SYNC_ALL_CONTACT_FROM_SOCIETE))) continue;
 		if ($type_object == 'user_object' && empty($conf->global->GCS_GOOGLE_SYNC_USER)) continue;
