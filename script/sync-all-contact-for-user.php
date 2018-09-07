@@ -14,7 +14,7 @@
 	}
 	else
 	{
-		echo "Pas de fk_user, c'est donc pour tous les users qui on un token";
+		echo "Pas de fk_user, c'est donc pour tous les users qui on un token<br />";
 	}
 	
 
@@ -34,7 +34,7 @@ echo count($Tab);
 //	var_dump($Tab);
 
 	foreach($Tab as &$row) {
-		$fk_object = $row->fk_object;
+		$fk_object = $row->rowid;
 		$type_object = $row->type_object;
 
 		if ($type_object == 'societe' && empty($conf->global->GCS_GOOGLE_SYNC_THIRDPARTY)) continue;
