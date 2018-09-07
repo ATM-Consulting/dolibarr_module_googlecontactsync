@@ -21,13 +21,14 @@
 	dol_include_once('/googlecontactsync/class/gcs.class.php');
 				  	
 	$PDOdb=new TPDOdb;
-
+		
 	$Tab = $PDOdb->ExecuteAsArray("
-		SELECT fk_object, type_object FROM ".MAIN_DB_PREFIX."gcs_token WHERE to_sync = 0 AND type_object != 'user'
+		SELECT rowid, 'contact' as type_object FROM ".MAIN_DB_PREFIX."socpeople WHERE 1 
+		UNION
+		SELECT rowid, 'societe' as type_object FROM ".MAIN_DB_PREFIX."societe WHERE 1 
+		UNION
+		SELECT rowid, 'user_object' as type_object FROM ".MAIN_DB_PREFIX."user WHERE 1 
 	");
-//	var_dump("
-//		SELECT fk_object, type_object FROM ".MAIN_DB_PREFIX."gcs_token WHERE to_sync = 0 AND type_object != 'user'
-//	");
 	
 echo count($Tab);
 //	var_dump($Tab);

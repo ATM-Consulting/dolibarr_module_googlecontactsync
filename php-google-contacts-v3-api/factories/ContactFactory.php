@@ -168,7 +168,7 @@ abstract class ContactFactory
         return new Contact($contactDetails);
     }
 
-    public static function submitUpdates(Contact $updatedContact)
+    public static function submitUpdates(&$userUsedToSync, Contact $updatedContact)
     {
 		global $langs;
 		$langs->load('companies');
@@ -305,7 +305,7 @@ gd:country?
         $updatedXML = $xmlContactsEntry->asXML();
      	//pre(htmlentities($updatedXML),true);
 // TODO remplacer "default" par l'adresse mail $userUsedToSync->email si nécessaire
-        $req = new \Google_Http_Request('https://www.google.com/m8/feeds/contacts/default/full/'.basename($updatedContact->id));
+        $req = new \Google_Http_Request('https://www.google.com/m8/feeds/contacts/'.urldecode($userUsedToSync->email).'/full/'.basename($updatedContact->id));
         $req->setRequestHeaders(array(
 			'Content-Type' => 'application/atom+xml; charset=UTF-8; type=entry'
 			,'GData-Version' => '3.0'
@@ -356,7 +356,7 @@ gd:country?
         return new Contact($contactDetails);
     }
 
-    public static function create($name)
+    public static function create($userUsedToSync, $name)
     {
     	$doc = new \DOMDocument();
         $doc->formatOutput = true;
@@ -372,7 +372,7 @@ gd:country?
         $xmlToSend = $doc->saveXML();
         $client = GoogleHelper::getClient();
 
-        $req = new \Google_Http_Request('https://www.google.com/m8/feeds/contacts/default/full');
+        $req = new \Google_Http_Request('https://www.google.com/m8/feeds/contacts/'.urlencode($userUsedToSync->email).'/full');
         $req->setRequestHeaders(array('content-type' => 'application/atom+xml; charset=UTF-8; type=feed'));
         $req->setRequestMethod('POST');
         $req->setPostBody($xmlToSend);
