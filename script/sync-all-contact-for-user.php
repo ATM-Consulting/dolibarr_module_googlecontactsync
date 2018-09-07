@@ -1,7 +1,5 @@
 <?php
-	// call with "php" command from server
 	set_time_limit(0);
-	chdir(__DIR__);
 	require '../config.php';
 
 
@@ -40,8 +38,8 @@
 	foreach($Tab as &$row) {
 		$i++;
 		if ($i % 100 == 0) {
-			echo "iteration ".$i." / ".$count;
-			ob_flush();
+			echo "iteration ".$i." / ".$count."<br />";
+			flush();
 		}
 		
 		$fk_object = $row->rowid;
