@@ -51,7 +51,7 @@ function _setGroup($name) {
 	
 	require_once __DIR__.'/../php-google-contacts-v3-api/vendor/autoload.php';
 	
-	return \TGCSToken::setGroup($PDOdb,$user->id,$name);
+	return \TGCSToken::setGroup($user,$name);
 	
 }
 
@@ -95,7 +95,7 @@ function _optimizedSync() {
 	$contacts = rapidweb\googlecontacts\factories\ContactFactory::getAll();
 
 	if(!empty($conf->global->GCS_GOOGLE_GROUP_NAME)) {
-		$contactGroup = \TGCSToken::setGroup($PDOdb, $user->id, $conf->global->GCS_GOOGLE_GROUP_NAME);
+		$contactGroup = \TGCSToken::setGroup($user, $conf->global->GCS_GOOGLE_GROUP_NAME);
 		// $contact->groupMembershipInfo = $contactGroup->id; 
 	}
 

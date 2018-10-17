@@ -150,18 +150,25 @@ class Actionsgooglecontactsync
 			$token = TGCSToken::getTokenFor($PDOdb, $user->id, 'user');
 		
 			global $langs,$conf,$user,$db;
-		
+			
 			if(!empty($token)) {
-				
+				$attr = 'id';
 				$fk_object = $object->id;
-				if(empty($fk_object))$fk_object=GETPOST('id');
-				if(empty($fk_object))$fk_object=GETPOST('socid');
+				if(empty($fk_object)) $fk_object=GETPOST('id');
+				if(empty($fk_object))
+				{
+					$attr = 'socid';
+					$fk_object=GETPOST('socid');
+				}
 				
 				$element = $object->element;
 				if ($element == 'user') $element = 'user_object';
 				
-				TGCSToken::setSync($PDOdb,$fk_object, $element, $user->id);
+				if(!empty($conf->global->GCS_GOOGLE_SYNC_CONTACT_ALL_USER)) $r=TGCSToken::setSyncAll($PDOdb,$fk_object, $element, $user->id);
+				else $r=TGCSToken::setSync($PDOdb,$fk_object, $element, $user->id);
 				
+				header('Location: '.$_SERVER['PHP_SELF'].'?'.$attr.'='.$fk_object);
+				exit;
 			}
 		
 		}
@@ -186,20 +193,26 @@ class Actionsgooglecontactsync
 			global $langs,$conf,$user,$db;
 		
 			if(!empty($token)) {
-				if($object->element == 'contact' && !empty($conf->global->GCS_GOOGLE_SYNC_CONTACT)) {
-					echo '<a class="butAction" href="'.dol_buildpath('/contact/card.php',1).'?id='.$object->id.'&action=syncToPhone">'.$langs->trans('SyncCardToPhone').'</a>';
-				}
-				else if($object->element == 'societe' && !empty($conf->global->GCS_GOOGLE_SYNC_THIRDPARTY)) {
-				    if (DOL_VERSION < 6.0) {
-				        echo '<a class="butAction" href="'.dol_buildpath('/societe/soc.php',1).'?socid='.$object->id.'&action=syncToPhone">'.$langs->trans('SyncCardToPhone').'</a>';
-				    } else {
-				        echo '<a class="butAction" href="'.dol_buildpath('/societe/card.php',1).'?socid='.$object->id.'&action=syncToPhone">'.$langs->trans('SyncCardToPhone').'</a>';
-				    }
-					
-				}
-				else if ($object->element == 'user' && empty($object->socid))
+				$element = $object->element;
+				if ($element == 'user') $element = 'user_object';
+				
+				if (TGCSToken::allowedToSync($object->id, $element, $user->id))
 				{
-					echo '<a class="butAction" href="'.dol_buildpath('/user/card.php',1).'?id='.$object->id.'&action=syncToPhone">'.$langs->trans('SyncCardToPhone').'</a>';
+					if($object->element == 'contact' && !empty($conf->global->GCS_GOOGLE_SYNC_CONTACT)) {
+						echo '<a class="butAction" href="'.dol_buildpath('/contact/card.php',1).'?id='.$object->id.'&action=syncToPhone">'.$langs->trans('SyncCardToPhone').'</a>';
+					}
+					else if($object->element == 'societe' && !empty($conf->global->GCS_GOOGLE_SYNC_THIRDPARTY)) {
+						if (DOL_VERSION < 6.0) {
+							echo '<a class="butAction" href="'.dol_buildpath('/societe/soc.php',1).'?socid='.$object->id.'&action=syncToPhone">'.$langs->trans('SyncCardToPhone').'</a>';
+						} else {
+							echo '<a class="butAction" href="'.dol_buildpath('/societe/card.php',1).'?socid='.$object->id.'&action=syncToPhone">'.$langs->trans('SyncCardToPhone').'</a>';
+						}
+
+					}
+					else if ($object->element == 'user' && empty($object->socid))
+					{
+						echo '<a class="butAction" href="'.dol_buildpath('/user/card.php',1).'?id='.$object->id.'&action=syncToPhone">'.$langs->trans('SyncCardToPhone').'</a>';
+					}
 				}
 				
 			}
