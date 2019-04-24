@@ -137,9 +137,9 @@ class TGCSToken extends TObjetStd {
 				return 0;
 			}
 			$object->name = $object->getFullName($langs);
-//			$object->email = $object->email;
 			$object->phone = $object->office_phone;
-//			
+			$object->phone_mobile = $object->user_mobile;
+			
 			if (!empty($object->fk_soc))
 			{
 				$object->fetch_thirdparty();
