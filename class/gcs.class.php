@@ -8,12 +8,12 @@ if (!class_exists('TObjetStd'))
 
 class TGCSToken extends TObjetStd {
 
-	static public $table = 'gcs_token';
+	static public $_table = 'gcs_token';
 	
     function __construct() {
     	global $conf;
 		
-        $this->set_table(MAIN_DB_PREFIX.self::$table);
+        $this->set_table(MAIN_DB_PREFIX.self::$_table);
 		
 		$this->add_champs('fk_object,fk_user,to_sync',array('type'=>'integer', 'index'=>true));
         $this->add_champs('token,refresh_token,type_object', array('type'=>'string','index'=>true));
@@ -407,7 +407,7 @@ class TGCSToken extends TObjetStd {
 	public function loadByObject(&$PDOdb, $fk_object, $type_object, $fk_user = 0) {
 		global $conf;
 		
-		$sql = "SELECT rowid FROM ".MAIN_DB_PREFIX.self::$table." WHERE fk_object=".(int)$fk_object." AND type_object='".$type_object."'";
+		$sql = "SELECT rowid FROM ".MAIN_DB_PREFIX.self::$_table." WHERE fk_object=".(int)$fk_object." AND type_object='".$type_object."'";
 		$sql.= ' AND entity = '.$conf->entity;
 		
 		if(!empty($fk_user)) $sql.=" AND fk_user = ".$fk_user;
@@ -424,7 +424,7 @@ class TGCSToken extends TObjetStd {
 	public static function getTokenToSync(&$PDOdb, $fk_user = 0, $nb = 5, $filter_entity=true, $from_cron_job=false) {
 		global $conf;
 		
-		$sql = "SELECT t.rowid FROM ".MAIN_DB_PREFIX.self::$table." t";
+		$sql = "SELECT t.rowid FROM ".MAIN_DB_PREFIX.self::$_table." t";
 		$sql.= " INNER JOIN ".MAIN_DB_PREFIX."user u ON (u.rowid = t.fk_user)";
 		$sql.= " WHERE to_sync = 1 ";
 		if ($filter_entity) $sql.= ' AND t.entity = '.$conf->entity;
@@ -476,7 +476,7 @@ class TGCSToken extends TObjetStd {
 		if(empty($fk_object) || empty($type_object) ) return false;
 		
 		$TUserToken = $PDOdb->ExecuteAsArray("
-			SELECT t.fk_object FROM ".MAIN_DB_PREFIX.self::$table." t
+			SELECT t.fk_object FROM ".MAIN_DB_PREFIX.self::$_table." t
 			INNER JOIN ".MAIN_DB_PREFIX."user u ON (u.rowid = t.fk_object)
 			WHERE t.type_object='user' AND t.refresh_token != '' AND t.entity = ".$conf->entity."
 			AND u.statut = 1
