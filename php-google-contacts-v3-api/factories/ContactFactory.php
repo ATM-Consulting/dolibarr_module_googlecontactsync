@@ -71,35 +71,35 @@ abstract class ContactFactory
 
         return $contactsArray;
     }
-    
+
     public static function getAllByURL($selfURL, $full = false)
     {
     	$client = GoogleHelper::getClient();
-    
+
     	$req = new \Google_Http_Request($selfURL);
-    
+
     	$val = $client->getAuth()->authenticatedRequest($req);
 
-	//var_dump($val);   
+	//var_dump($val);
 
     	$response = $val->getResponseBody();
-    	//pre(htmlentities($response), true); 
+    	//pre(htmlentities($response), true);
     	$xml =  simplexml_load_string($response);
     	if($full) return $xml;
     	//echo pre($xml,true);
     	//echo pre(htmlentities($xml->asXML()),true);
-    	
+
     	$Tab=array();
     	foreach ($xml->entry as $xmlEntry) {
-    		
+
     		$Tab[] = $xmlEntry;
-    		
+
     	}
-    	
+
     	return $Tab;
     }
-    
-    
+
+
     public static function getBySelfURL($selfURL)
     {
         $client = GoogleHelper::getClient();
@@ -157,7 +157,7 @@ abstract class ContactFactory
             			,'rel'=>(string) $attributes['rel']
             	) ;
             }
-            
+
             else if ($key == 'email') {
                 $contactDetails[$key] = (string) $attributes['address'];
             } else {
@@ -188,9 +188,13 @@ abstract class ContactFactory
 
         $xmlContact = simplexml_load_string($response);
 
+        if(empty($xmlContact)){
+        	return false;
+		}
+
         $xmlContact->registerXPathNamespace('gd', 'http://schemas.google.com/g/2005');
         $xmlContact->registerXPathNamespace('gContact', 'http://schemas.google.com/contact/2008');
-        
+
         $xmlContactsEntry = $xmlContact;
 
         $xmlContactsEntry->title = $updatedContact->name;
@@ -214,10 +218,10 @@ abstract class ContactFactory
         	$o->addAttribute('address',$updatedContact->email);
         	$o->addAttribute('rel',"http://schemas.google.com/g/2005#work");
         }
-	
+
      	unset($contactGDNodes->phoneNumber);
         foreach($updatedContact->phoneNumbers as $type=>$number) {
-        	
+
         	if ($type == 'work') $rel = 'http://schemas.google.com/g/2005#work';
 			else if ($type == 'mobile') $rel = 'http://schemas.google.com/g/2005#work_mobile';
 			else if ($type == 'perso') $rel = 'http://schemas.google.com/g/2005#mobile';
@@ -225,10 +229,10 @@ abstract class ContactFactory
 			else if ($type == 'other') $rel = 'http://schemas.google.com/g/2005#other';
 			else if ($type == 'fax') $rel = 'http://schemas.google.com/g/2005#fax';
 			else continue;
-        	
+
         	$o = $xmlContactsEntry->addChild('phoneNumber',$number,'http://schemas.google.com/g/2005');
         	$o->addAttribute('rel', $rel);
-        	 
+
         }
 
        	unset($contactGDNodes->structuredPostalAddress);
@@ -247,7 +251,7 @@ abstract class ContactFactory
   <gd:postcode>94043</gd:postcode>
 </gd:structuredPostalAddress>
 gd:country?
-         * 
+         *
          */
 
 		unset($contactGDNodes->organization);
@@ -273,7 +277,7 @@ gd:country?
 			$o->addAttribute('href', $updatedContact->website);
 			$o->addAttribute('label', $langs->trans('DolibarrURL'));
 		}
-        
+
        	unset($contactGContactNodes->groupMembershipInfo);
         if(!empty($updatedContact->groupMembershipInfo)) {
         	foreach($updatedContact->groupMembershipInfo as $group) {
@@ -342,7 +346,7 @@ gd:country?
         }
 
         $contactGDNodes = $xmlContactsEntry->children('http://schemas.google.com/g/2005');
-        
+
         foreach ($contactGDNodes as $key => $value) {
             $attributes = $value->attributes();
 
@@ -384,11 +388,11 @@ gd:country?
         $xmlContact = simplexml_load_string($response);
 
         if(!empty($xmlContact->error->internalReason)) {
-        	
+
         	return $xmlContact->error;
-        	
+
         }
-        
+
 	if(empty($xmlContact)) {
 		return 'php-google-contacts-v3-api/factories/ContactFactory.php L389 Error in $val->getResponseBody()';
 	}
