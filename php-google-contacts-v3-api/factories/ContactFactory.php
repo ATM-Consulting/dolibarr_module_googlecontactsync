@@ -324,40 +324,46 @@ gd:country?
         $response = $val->getResponseBody();
       	//pre(htmlentities($response),true); exit;
         $xmlContact = simplexml_load_string($response);
-        $xmlContact->registerXPathNamespace('gd', 'http://schemas.google.com/g/2005');
-
-        $xmlContactsEntry = $xmlContact;
 
         $contactDetails = array();
 
-        $contactDetails['id'] = (string) $xmlContactsEntry->id;
-        $contactDetails['name'] = (string) $xmlContactsEntry->title;
+        if($xmlContact && is_object($xmlContact))
+        {
+			$xmlContact->registerXPathNamespace('gd', 'http://schemas.google.com/g/2005');
 
-        foreach ($xmlContactsEntry->children() as $key => $value) {
-            $attributes = $value->attributes();
+			$xmlContactsEntry = $xmlContact;
 
-            if ($key == 'link') {
-                if ($attributes['rel'] == 'edit') {
-                    $contactDetails['editURL'] = (string) $attributes['href'];
-                } elseif ($attributes['rel'] == 'self') {
-                    $contactDetails['selfURL'] = (string) $attributes['href'];
-                }
-            }
-        }
+			$contactDetails['id'] = (string)$xmlContactsEntry->id;
+			$contactDetails['name'] = (string)$xmlContactsEntry->title;
 
-        $contactGDNodes = $xmlContactsEntry->children('http://schemas.google.com/g/2005');
+			foreach ($xmlContactsEntry->children() as $key => $value) {
+				$attributes = $value->attributes();
 
-        foreach ($contactGDNodes as $key => $value) {
-            $attributes = $value->attributes();
+				if ($key == 'link') {
+					if ($attributes['rel'] == 'edit') {
+						$contactDetails['editURL'] = (string)$attributes['href'];
+					} elseif ($attributes['rel'] == 'self') {
+						$contactDetails['selfURL'] = (string)$attributes['href'];
+					}
+				}
+			}
 
-            if ($key == 'email') {
-                $contactDetails[$key] = (string) $attributes['address'];
-            } else {
-                $contactDetails[$key] = (string) $value;
-            }
-        }
+			$contactGDNodes = $xmlContactsEntry->children('http://schemas.google.com/g/2005');
 
-        return new Contact($contactDetails);
+			foreach ($contactGDNodes as $key => $value) {
+				$attributes = $value->attributes();
+
+				if ($key == 'email') {
+					$contactDetails[$key] = (string)$attributes['address'];
+				} else {
+					$contactDetails[$key] = (string)$value;
+				}
+			}
+
+			return new Contact($contactDetails);
+		}
+
+        return false;
     }
 
     public static function create($userUsedToSync, $name)
