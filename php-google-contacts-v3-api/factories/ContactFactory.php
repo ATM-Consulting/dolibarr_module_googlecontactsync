@@ -322,6 +322,10 @@ gd:country?
         $val = $client->getAuth()->authenticatedRequest($req);
 
         $response = $val->getResponseBody();
+
+        if(!$response){
+        	return false;
+		}
       	//pre(htmlentities($response),true); exit;
         $xmlContact = simplexml_load_string($response);
 
