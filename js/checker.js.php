@@ -1,7 +1,7 @@
 <?php
 	require '../config.php';
 	
-	if(empty($conf->googlecontactsync->enabled) || !empty($conf->global->GSC_DISABLE_JS_SYNC)) exit;
+	if(!isModEnabled('googlecontactsync') || !empty($conf->global->GSC_DISABLE_JS_SYNC)) exit;
 	
 ?>
 $(document).ready(function() {

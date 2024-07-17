@@ -86,7 +86,7 @@ class modgoogleContactSync extends DolibarrModules
 	 	//							'js' => array('/googlecontactsync/js/googlecontactsync.js'),          // Set this to relative path of js file if module must load a js on all pages
 		//							'hooks' => array('hookcontext1','hookcontext2')  	// Set here all hooks context managed by module
 		//							'dir' => array('output' => 'othermodulename'),      // To force the default directories names
-		//							'workflow' => array('WORKFLOW_MODULE1_YOURACTIONTYPE_MODULE2'=>array('enabled'=>'! empty($conf->module1->enabled) && ! empty($conf->module2->enabled)', 'picto'=>'yourpicto@googlecontactsync')) // Set here all workflow context managed by module
+		//							'workflow' => array('WORKFLOW_MODULE1_YOURACTIONTYPE_MODULE2'=>array('enabled'=>'isModEnabled('module1') && isModEnabled('module2')', 'picto'=>'yourpicto@googlecontactsync')) // Set here all workflow context managed by module
 		//                        );
 		$this->module_parts = array(
 			'hooks'=>array('usercard','contactcard','thirdpartycard')
@@ -118,8 +118,8 @@ class modgoogleContactSync extends DolibarrModules
 		$this->const = array();
 
 		// Array to add new pages in new tabs
-		// Example: $this->tabs = array('objecttype:+tabname1:Title1:mylangfile@googlecontactsync:$user->rights->googlecontactsync->read:/googlecontactsync/mynewtab1.php?id=__ID__',  	// To add a new tab identified by code tabname1
-        //                              'objecttype:+tabname2:Title2:mylangfile@googlecontactsync:$user->rights->othermodule->read:/googlecontactsync/mynewtab2.php?id=__ID__',  	// To add another new tab identified by code tabname2
+		// Example: $this->tabs = array('objecttype:+tabname1:Title1:mylangfile@googlecontactsync:$user->hasRight('googlecontactsync', 'read'):/googlecontactsync/mynewtab1.php?id=__ID__',  	// To add a new tab identified by code tabname1
+        //                              'objecttype:+tabname2:Title2:mylangfile@googlecontactsync:$user->hasRight('othermodule', 'read'):/googlecontactsync/mynewtab2.php?id=__ID__',  	// To add another new tab identified by code tabname2
         //                              'objecttype:-tabname:NU:conditiontoremove');                                                     						// To remove an existing tab identified by code tabname
 		// where objecttype can be
 		// 'categories_x'	  to add a tab in category view (replace 'x' by type of category (0=product, 1=supplier, 2=customer, 3=member)
@@ -144,14 +144,14 @@ class modgoogleContactSync extends DolibarrModules
         $this->tabs = array();
 
         // Dictionaries
-	    if (! isset($conf->googlecontactsync->enabled))
+	    if (! isModEnabled('googlecontactsync'))
         {
         	$conf->googlecontactsync=new stdClass();
         	$conf->googlecontactsync->enabled=0;
         }
 		$this->dictionaries=array();
         /* Example:
-        if (! isset($conf->googlecontactsync->enabled)) $conf->googlecontactsync->enabled=0;	// This is to avoid warnings
+        if (! isModEnabled('googlecontactsync')) $conf->googlecontactsync->enabled=0;	// This is to avoid warnings
         $this->dictionaries=array(
             'langs'=>'mylangfile@googlecontactsync',
             'tabname'=>array(MAIN_DB_PREFIX."table1",MAIN_DB_PREFIX."table2",MAIN_DB_PREFIX."table3"),		// List of tables we want to see into dictonnary editor
@@ -162,7 +162,7 @@ class modgoogleContactSync extends DolibarrModules
             'tabfieldvalue'=>array("code,label","code,label","code,label"),																				// List of fields (list of fields to edit a record)
             'tabfieldinsert'=>array("code,label","code,label","code,label"),																			// List of fields (list of fields for insert)
             'tabrowid'=>array("rowid","rowid","rowid"),																									// Name of columns with primary key (try to always name it 'rowid')
-            'tabcond'=>array($conf->googlecontactsync->enabled,$conf->googlecontactsync->enabled,$conf->googlecontactsync->enabled)												// Condition to show each dictionary
+            'tabcond'=>array(isModEnabled('googlecontactsync'),isModEnabled('googlecontactsync'),isModEnabled('googlecontactsync'))												// Condition to show each dictionary
         );
         */
 
@@ -181,8 +181,8 @@ class modgoogleContactSync extends DolibarrModules
 		// $this->rights[$r][0] = $this->numero . $r;	// Permission id (must not be already used)
 		// $this->rights[$r][1] = 'Permision label';	// Permission label
 		// $this->rights[$r][3] = 1; 					// Permission by default for new user (0/1)
-		// $this->rights[$r][4] = 'level1';				// In php code, permission will be checked by test if ($user->rights->permkey->level1->level2)
-		// $this->rights[$r][5] = 'level2';				// In php code, permission will be checked by test if ($user->rights->permkey->level1->level2)
+		// $this->rights[$r][4] = 'level1';				// In php code, permission will be checked by test if ($user->hasRight('permkey', 'level1', 'level2'))
+		// $this->rights[$r][5] = 'level2';				// In php code, permission will be checked by test if ($user->hasRight('permkey', 'level1', 'level2'))
 		// $r++;
 
 
@@ -201,8 +201,8 @@ class modgoogleContactSync extends DolibarrModules
 		//							'url'=>'/googlecontactsync/pagetop.php',
 		//							'langs'=>'mylangfile@googlecontactsync',	        // Lang file to use (without .lang) by module. File must be in langs/code_CODE/ directory.
 		//							'position'=>100,
-		//							'enabled'=>'$conf->googlecontactsync->enabled',	// Define condition to show or hide menu entry. Use '$conf->googlecontactsync->enabled' if entry must be visible if module is enabled.
-		//							'perms'=>'1',			                // Use 'perms'=>'$user->rights->googlecontactsync->level1->level2' if you want your menu with a permission rules
+		//							'enabled'=>'isModEnabled('googlecontactsync')',	// Define condition to show or hide menu entry. Use 'isModEnabled('googlecontactsync')' if entry must be visible if module is enabled.
+		//							'perms'=>'1',			                // Use 'perms'=>'$user->hasRight('googlecontactsync', 'level1', 'level2')' if you want your menu with a permission rules
 		//							'target'=>'',
 		//							'user'=>2);				                // 0=Menu for internal users, 1=external users, 2=both
 		// $r++;
@@ -216,8 +216,8 @@ class modgoogleContactSync extends DolibarrModules
 		//							'url'=>'/googlecontactsync/pagelevel2.php',
 		//							'langs'=>'mylangfile@googlecontactsync',	        // Lang file to use (without .lang) by module. File must be in langs/code_CODE/ directory.
 		//							'position'=>100,
-		//							'enabled'=>'$conf->googlecontactsync->enabled',  // Define condition to show or hide menu entry. Use '$conf->googlecontactsync->enabled' if entry must be visible if module is enabled. Use '$leftmenu==\'system\'' to show if leftmenu system is selected.
-		//							'perms'=>'1',			                // Use 'perms'=>'$user->rights->googlecontactsync->level1->level2' if you want your menu with a permission rules
+		//							'enabled'=>'isModEnabled('googlecontactsync')',  // Define condition to show or hide menu entry. Use 'isModEnabled('googlecontactsync')' if entry must be visible if module is enabled. Use '$leftmenu==\'system\'' to show if leftmenu system is selected.
+		//							'perms'=>'1',			                // Use 'perms'=>'$user->hasRight('googlecontactsync', 'level1', 'level2')' if you want your menu with a permission rules
 		//							'target'=>'',
 		//							'user'=>2);				                // 0=Menu for internal users, 1=external users, 2=both
 		// $r++;
